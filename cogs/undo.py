@@ -1,12 +1,12 @@
 import discord
+import json
 from discord.ext import commands
 from discord import app_commands
 import sqlite3
 import sys
 from typing import Optional
 from discord.app_commands import Choice
-from db import Store
-from common import emoji
+from sql import Store
 from datetime import date as new_date, datetime, timedelta
 
 db_name = "logs.db"
@@ -15,7 +15,7 @@ with open("cogs/jsons/settings.json") as json_file:
     data_dict = json.load(json_file)
     guildid = data_dict["guild_id"]
 
-class Log(commands.Cog):
+class Undo(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
@@ -36,4 +36,4 @@ class Log(commands.Cog):
         
         
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(Log(bot))                   
+    await bot.add_cog(Undo(bot))                   

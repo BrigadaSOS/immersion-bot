@@ -22,7 +22,7 @@ class MediaType(SqliteEnum):
     VN = 'VN'
     ANIME = 'ANIME'
     LISTENING = 'LISTENING'
-    
+
 def _to_amount(media_type, amount):
     if media_type == "BOOK":
         return amount
@@ -40,7 +40,7 @@ def _to_amount(media_type, amount):
         return amount / 350.0
     else:
         raise Exception(f'Unknown media type: {media_type}')
-    
+
 def multiplied_points(logs):
     dictes = defaultdict(list)
     for row in logs:
@@ -64,8 +64,7 @@ def media_type_format(media_type):
         return "mins"
     else:
         raise Exception(f'Unknown media type: {media_type}')
-    
-    
+
 def millify(n):
     millnames = ['','k','m','b']
     n = float(n)
@@ -137,7 +136,7 @@ def point_message_converter(media_type, amount, name):
         if name:
             return amount, "chars", f"1/350 points/characters → +{round(amount, 2)} points", name
         return amount, "chars", f"1/350 points/characters → +{round(amount, 2)} points", f"of {media_type}" 
-    
+
     if media_type == "MANGA":
         amount = amount * 0.2
         if name and name.isdigit():
@@ -148,12 +147,12 @@ def point_message_converter(media_type, amount, name):
         if name:
             return amount, "pgs", f"0.2 points per page → +{round(amount, 2)} points", name
         return amount, "pgs", f"0.2 points per page → +{round(amount, 2)} points", f"of {media_type}" 
-    
+
     if media_type == "BOOK":
         if name:
             return amount, "pgs", f"1 point per page → +{round(amount, 2)} points", ("of " + name if name else "")
         return amount, "pgs", f"1 point per page → +{round(amount, 2)} points", f"of {media_type}" 
-    
+
     if media_type == "ANIME":
         amount = amount * 9.5
         if name and name.isdigit():
@@ -164,13 +163,13 @@ def point_message_converter(media_type, amount, name):
         if name:
             return amount, "eps", f"9.5 points per eps → +{round(amount, 2)} points", name
         return amount, "eps", f"9.5 points per eps → +{round(amount, 2)} points", f"of {media_type}" 
-    
+
     if media_type == "READING":
         amount = amount / 350
         if name:
             return amount, "pgs", f"1/135 points/character of reading → +{round(amount, 2)} points", name
-        return amount, "pgs", f"1/135 points/character of reading → +{round(amount, 2)} points", f"of {media_type}" 
-    
+        return amount, "pgs", f"1/135 points/character of reading → +{round(amount, 2)} points", f"of {media_type}"
+
     if media_type == "READTIME":
         amount = amount * 0.45
         if name:

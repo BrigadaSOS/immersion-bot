@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from datetime import datetime
 from datetime import date as new_date, datetime, timedelta
 import json
 from typing import Optional
@@ -8,7 +7,6 @@ from discord import app_commands
 from discord.app_commands import Choice
 
 from collections import defaultdict
-import math
 import matplotlib.pyplot as plt
 import pandas as pd
 

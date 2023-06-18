@@ -1,7 +1,5 @@
 import discord
 from discord.ext import commands
-from discord import app_commands
-import asyncio
 import os
 import json
 import sys
@@ -17,9 +15,6 @@ with open("cogs/jsons/settings.json") as json_file:
     guild_id = data_dict["guild_id"]
     presence_message = data_dict["presence"]
 
-with open("token_new.txt") as token_file:
-    bot_token = token_file.read()
-    
 #############################################################
 
 class CustomCommandTree(discord.app_commands.CommandTree):
@@ -77,4 +72,4 @@ class MyBot(commands.Bot):
         print(f"Synced commands to guild with id {guild_id}.")
 
 bot = MyBot()
-bot.run(bot_token)
+bot.run(os.environ['TOKEN'])
