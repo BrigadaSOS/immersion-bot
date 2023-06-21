@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: immersion-bot
+  name: immersion-bot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: immersion-bot
+  template:
+    metadata:
+      labels:
+        app: immersion-bot
+    spec:
+      containers:
+        - image: immersion-bot
+          name: immersion-bot
+      imagePullSecrets:
+      - name: registry-esys
