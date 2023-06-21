@@ -110,7 +110,7 @@ jobs:
     - name: Update Kubernetes resources
       run: |
        cd kustomize/base
-       kustomize edit set image immersion-bot=ghcr.io/davafons/immersion-bot:$GITHUB_SHA
+       kustomize edit set image immersion-bot=ghcr.io/BrigadaSOS/immersion-bot:$GITHUB_SHA
        cat kustomization.yaml
 
     - name: Commit files
