@@ -17,5 +17,6 @@ spec:
       containers:
         - image: immersion-bot
           name: immersion-bot
-      imagePullSecrets:
-      - name: registry-esys
+          ports:
+            - name: http
+              containerPort: 8080

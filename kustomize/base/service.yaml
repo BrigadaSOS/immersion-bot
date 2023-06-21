@@ -5,6 +5,10 @@ metadata:
     app: immersion-bot
   name: immersion-bot
 spec:
+  ports:
+    - name: http
+      port: 8080
+      targetedPort: http
   selector:
     app: immersion-bot
   type: ClusterIP
