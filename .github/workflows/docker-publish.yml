@@ -7,11 +7,9 @@ name: Build Docker Image and deploy to Server
 
 on:
   push:
-    branches: [ "prod" ]
+    branches: [ "main" ]
     # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
-  pull_request:
-    branches: [ "prod" ]
 
 env:
   # Use docker.io for Docker Hub if empty
