@@ -6,5 +6,5 @@ resources:
 namespace: discord
 images:
 - name: immersion-bot
-  newName: ghcr.io/brigadasos/immersion-bot
-  newTag: v0.1.2
+  newName: ghcr.io/BrigadaSOS/immersion-bot
+  newTag: a950b9a7db1f2e226c3f9ea2fc083bd09c0e6ab4
