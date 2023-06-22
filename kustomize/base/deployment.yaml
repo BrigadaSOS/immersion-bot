@@ -18,6 +18,12 @@ spec:
         - name: regcred
       containers:
         - image: immersion-bot
+          env:
+            - name: TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: immersion-bot-secrets-b2gck5m769
+                  key: TOKEN
           name: immersion-bot
           ports:
             - name: http
