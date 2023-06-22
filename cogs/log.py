@@ -19,11 +19,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 _DB_NAME = 'prod.db'
-CHANNEL_ID = int(os.getenv('CHANNEL_ID'))
 
 with open("cogs/jsons/settings.json") as json_file:
     data_dict = json.load(json_file)
     guildid = data_dict["guild_id"]
+    channelid= data_dict["channel_id"]
 
 log = logging.getLogger(__name__)
   
@@ -47,7 +47,7 @@ class Log(commands.Cog):
     @app_commands.choices(media_type = [Choice(name="Visual Novel", value="VN"), Choice(name="Manga", value="Manga"), Choice(name="Anime", value="Anime"), Choice(name="Book", value="Book"), Choice(name="Readtime", value="Readtime"), Choice(name="Listening", value="Listening"), Choice(name="Reading", value="Reading")])
     async def log(self, interaction: discord.Interaction, media_type: str, amount: str, name: Optional[str], comment: Optional[str], backlog: Optional[str]):
         await interaction.response.defer()
-        if interaction.channel.id != CHANNEL_ID: 
+        if interaction.channel.id != channelid: 
         #if interaction.channel.id !=947813835715256393 or not isinstance(ctx.channel, discord.channel.DMChannel):
             return await interaction.response.send_message(ephemeral=True, content='You can only log in #immersion-log or DMs.')
         

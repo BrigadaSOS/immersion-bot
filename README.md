@@ -6,8 +6,7 @@ TMW's immersion bot
 
 - Check `requirements.txt`, install via `pip install -r requirements.txt` (recommended in venv)
 - Set bot token in environment variable `TOKEN`
-- Create a `.env` file on your root and add `CHANNEL_ID='{your_immersion_logs_channel_id}'`
-- `cogs/jsons/settings.json` change `guildId`
+- `cogs/jsons/settings.json` change `guild_id` and `channel_id`
 
 
 ## Run on Docker
