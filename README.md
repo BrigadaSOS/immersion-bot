@@ -4,15 +4,14 @@ TMW's immersion bot
 
 ## Setup
 
-- Check `requirements.txt`, install via `pip install -r requirements.txt` (recommended in venv)
-- Set bot token in environment variable `TOKEN`
-- `cogs/jsons/settings.json` change `guild_id` and `channel_id`
-
+- Use `pipenv install` or `pip -m venv .venv && pip install -r requirements.txt`
+- Set the following environment variables (can use a `.env` file):
+  - TOKEN: <discord_bot_token>
+  - GUILD_ID: <discord_guild_id>
+  - CHANNEL_ID: <discord_channel_id>
 
 ## Run on Docker
 ```
 docker build -t immersion-bot .
-docker run -d -e TOKEN=<bot_token> immersion-bot
+docker run -d -e TOKEN=<bot_token> -e GUILD_ID=<guild_id> -e CHANNEL_ID=<channel_id> immersion-bot
 ```
-
-You need both prod.db and goals.db

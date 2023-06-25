@@ -1,4 +1,5 @@
 import json
+import os
 import sqlite3
 import sys
 from datetime import date as new_date
@@ -13,9 +14,7 @@ from sql import Store
 
 db_name = "logs.db"
 
-with open("immersion_bot/cogs/jsons/settings.json") as json_file:
-    data_dict = json.load(json_file)
-    guildid = data_dict["guild_id"]
+guildid = int(os.environ["GUILD_ID"])
 
 
 class Undo(commands.Cog):

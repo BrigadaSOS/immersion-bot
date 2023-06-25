@@ -1,4 +1,3 @@
-import json
 import os
 from datetime import datetime
 from typing import Optional
@@ -17,10 +16,8 @@ load_dotenv()
 
 _DB_NAME = "/mnt/immersion-bot/prod.db"
 
-with open("immersion_bot/cogs/jsons/settings.json") as json_file:
-    data_dict = json.load(json_file)
-    guildid = data_dict["guild_id"]
-    channelid = data_dict["channel_id"]
+guildid = int(os.environ["GUILD_ID"])
+channelid = int(os.environ["CHANNEL_ID"])
 
 #############################################################
 

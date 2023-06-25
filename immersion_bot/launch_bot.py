@@ -5,18 +5,17 @@ import sys
 import traceback
 
 import discord
+from discord import AppInfo
 from discord.ext import commands
 
 log = logging.getLogger(__name__)
 
-#############################################################
+GUILD_ID = int(os.environ["GUILD_ID"])
+CHANNEL_ID = int(os.environ["CHANNEL_ID"])
 
 with open("immersion_bot/cogs/jsons/settings.json") as json_file:
     data_dict = json.load(json_file)
-    guild_id = data_dict["guild_id"]
     presence_message = data_dict["presence"]
-
-#############################################################
 
 
 class CustomCommandTree(discord.app_commands.CommandTree):
@@ -62,10 +61,10 @@ class MyBot(commands.Bot):
             print(filename)
             if filename.endswith(".py"):
                 cog = await self.load_extension(f"cogs.{filename[:-3]}")
-        await bot.tree.sync()
+        print(f"All cogs loaded")
 
     async def on_ready(self):
-        application_info = await self.application_info()
+        application_info: AppInfo = await self.application_info()
         bot_owner = application_info.owner
         await bot_owner.create_dm()
         self.bot_owner_dm_channel = bot_owner.dm_channel
@@ -74,8 +73,9 @@ class MyBot(commands.Bot):
 
         print(f"Logged in as\n\tName: {self.user.name}\n\tID: {self.user.id}")
         print(f"Running pycord version: {discord.__version__}")
-        print(f"Synced commands to guild with id {guild_id}.")
+        print(f"Guild ID: ${GUILD_ID}. Chanel ID: ${CHANNEL_ID}")
 
 
-bot = MyBot()
-bot.run(os.environ["TOKEN"])
+if __name__ == "__main__":
+    bot = MyBot()
+    bot.run(os.environ["TOKEN"])

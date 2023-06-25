@@ -6,9 +6,7 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ui import Select, View
 
-with open("immersion_bot/cogs/jsons/settings.json") as json_file:
-    data_dict = json.load(json_file)
-    guild_id = data_dict["guild_id"]
+GUILD_ID = int(os.environ["GUILD_ID"])
 
 
 class BotManager(commands.Cog):
@@ -16,20 +14,34 @@ class BotManager(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="reload_cog", description="Reloads cogs.")
-    @app_commands.checks.has_role("Moderator")
+    @app_commands.checks.has_permissions(administrator = True)
     async def reload_cog(self, interaction: discord.Interaction):
-        my_view = CogSelectView(timeout=1800)
-        for cog_name in [extension for extension in self.bot.extensions]:
-            cog_button = ReloadButtons(self.bot, label=cog_name)
-            my_view.add_item(cog_button)
-        await interaction.response.send_message(
-            f"Please select the cog you would like to reload.",
-            view=my_view,
-            ephemeral=True,
-        )
+        pass
+        # my_view = CogSelectView(timeout=1800)
+        # for cog_name in [extension for extension in self.bot.extensions]:
+        #     cog_button = ReloadButtons(self.bot, label=cog_name)
+        #     my_view.add_item(cog_button)
+        # await interaction.response.send_message(
+        #     f"Please select the cog you would like to reload.",
+        #     view=my_view,
+        #     ephemeral=True,
+        # )
+
+    @app_commands.command(name="load", description="Loads cogs.")
+    @app_commands.checks.has_permissions(administrator = True)
+    async def load(self, interaction: discord.Interaction, *, cog: str):
+        await interaction.response.defer()
+        try:
+            await self.bot.load_extension(cog)
+        except Exception as e:
+            await interaction.edit_original_response(
+                content=f"**`ERROR:`** {type(e).__name__} - {e}"
+            )
+        else:
+            await interaction.edit_original_response(content="**`SUCCESS`**")
 
     @app_commands.command(name="stop", description="Stops cogs.")
-    @app_commands.checks.has_role("Moderator")
+    @app_commands.checks.has_permissions(administrator = True)
     async def stop(self, interaction: discord.Interaction):
         if interaction.command_failed:
             await interaction.response.send_message(
@@ -57,38 +69,39 @@ class BotManager(commands.Cog):
             f"Please select the cog you would like to reload.", view=view
         )
 
-    @app_commands.command(name="sync", description="Syncs slash commands to the guild.")
-    @app_commands.checks.has_role("Moderator")
-    async def sync(self, interaction: discord.Interaction):
-        self.bot.tree.copy_global_to(guild=discord.Object(id=guild_id))
-        await self.bot.tree.sync(guild=discord.Object(id=guild_id))
+    @app_commands.command(name="sync_global_commands", description="Syncs global slash commands.")
+    @app_commands.checks.has_permissions(administrator = True)
+    async def sync_global_commands(self, interaction: discord.Interaction):
+        await self.bot.tree.sync()
         await interaction.response.send_message(
-            f"Synced commands to guild with id {guild_id}."
+            f"Synced global commands"
         )
 
     @app_commands.command(
         name="clear_global_commands", description="Clears all global commands."
     )
-    @app_commands.checks.has_any_role("Moderator")
+    @app_commands.checks.has_permissions(administrator = True)
     async def clear_global_commands(self, interaction: discord.Interaction):
         self.bot.tree.clear_commands(guild=None)
         await self.bot.tree.sync()
         await interaction.response.send_message("Cleared global commands.")
 
-    @app_commands.command(name="load", description="Loads cogs.")
-    @app_commands.checks.has_any_role("Moderator")
-    async def load(self, interaction: discord.Interaction, *, cog: str):
-        await interaction.response.defer()
-        try:
-            await self.bot.load_extension(cog)
-        except Exception as e:
-            await interaction.edit_original_response(
-                content=f"**`ERROR:`** {type(e).__name__} - {e}"
-            )
-        else:
-            await interaction.edit_original_response(content="**`SUCCESS`**")
-
-    #  class CogSelectView(discord.ui.View):
+    @app_commands.command(name="sync", description="Syncs slash commands to the guild.")
+    @app_commands.checks.has_permissions(administrator = True)
+    async def sync(self, interaction: discord.Interaction):
+        self.bot.tree.copy_global_to(guild=discord.Object(id=GUILD_ID))
+        await self.bot.tree.sync(guild=discord.Object(id=GUILD_ID))
+        await interaction.response.send_message(
+            f"Synced commands to guild with id {GUILD_ID}."
+        )
+    @app_commands.command(
+        name="clear_guild_commands", description="Clears all guild commands."
+    )
+    @app_commands.checks.has_permissions(administrator = True)
+    async def clear_guild_commands(self, interaction: discord.Interaction):
+        self.bot.tree.clear_commands(guild=discord.Object(id=GUILD_ID))
+        await self.bot.tree.sync(guild=discord.Object(id=GUILD_ID))
+        await interaction.response.send_message("Cleared all guild commands.")
 
     async def interaction_check(self, interaction: discord.Interaction):
         return interaction.user.guild_permissions.administrator
@@ -129,4 +142,4 @@ class LoadButtons(discord.ui.Button):
 
 
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(BotManager(bot), guilds=[discord.Object(id=guild_id)])
+    await bot.add_cog(BotManager(bot), guilds=[discord.Object(id=GUILD_ID)])
