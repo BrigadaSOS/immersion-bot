@@ -7,4 +7,4 @@ namespace: discord
 images:
 - name: immersion-bot
   newName: ghcr.io/brigadasos/immersion-bot
-  newTag: v0.1.9
+  newTag: v0.1.10
