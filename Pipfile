@@ -14,6 +14,11 @@ matplotlib = "*"
 pandas = "*"
 
 [dev-packages]
+black = "*"
+isort = "*"
+mypy = "*"
+flake8 = "*"
+pylint = "*"
 
 [requires]
 python_version = "^3.8"
