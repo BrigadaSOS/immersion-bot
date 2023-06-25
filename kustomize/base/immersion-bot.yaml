@@ -6,7 +6,7 @@ metadata:
   name: immersion-bot
 spec:
   replicas: 1
-  revisionHistoryLimit: 2
+  revisionHistoryLimit: 1
   selector:
     matchLabels:
       app: immersion-bot
@@ -19,13 +19,24 @@ spec:
         - name: regcred
       containers:
         - image: immersion-bot
-          env:
-            - name: TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: immersion-bot-secrets-b2gck5m769
-                  key: TOKEN
+          envFrom:
+            - configMapRef:
+                name: immersion-bot-config
           name: immersion-bot
           ports:
             - name: http
               containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: immersion-bot
+  name: immersion-bot
+spec:
+  ports:
+    - name: http
+      port: 8080
+  selector:
+    app: immersion-bot
+  type: ClusterIP
