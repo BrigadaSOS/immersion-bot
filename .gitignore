@@ -1,8 +1,7 @@
 .idea
 env/
 __pycache__/
-cogs/__pycache__/
+dist/
 
 .env
 .venv
-token_new.txt

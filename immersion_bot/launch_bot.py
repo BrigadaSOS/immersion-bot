@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 #############################################################
 
-with open("cogs/jsons/settings.json") as json_file:
+with open("immersion_bot/cogs/jsons/settings.json") as json_file:
     data_dict = json.load(json_file)
     guild_id = data_dict["guild_id"]
     presence_message = data_dict["presence"]
@@ -53,7 +53,7 @@ class MyBot(commands.Bot):
         await self.bot_owner_dm_channel.send(error_string)
 
     async def setup_hook(self) -> None:
-        for filename in os.listdir("./cogs"):
+        for filename in os.listdir("immersion_bot/cogs"):
             print(filename)
             if filename.endswith(".py"):
                 cog = await self.load_extension(f"cogs.{filename[:-3]}")

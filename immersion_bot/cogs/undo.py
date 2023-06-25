@@ -11,7 +11,7 @@ from datetime import date as new_date, datetime, timedelta
 
 db_name = "logs.db"
 
-with open("cogs/jsons/settings.json") as json_file:
+with open("immersion_bot/cogs/jsons/settings.json") as json_file:
     data_dict = json.load(json_file)
     guildid = data_dict["guild_id"]
 

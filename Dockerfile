@@ -1,9 +1,10 @@
 FROM python:3.10
 
-COPY requirements.txt /app/
-
 WORKDIR /app
+
+COPY requirements.txt .
+
 RUN pip install -r requirements.txt
 
-COPY . .
-CMD ["python3", "launch_bot.py"]
+COPY immersion_bot/ immersion_bot/
+CMD ["python3", "immersion_bot/launch_bot.py"]

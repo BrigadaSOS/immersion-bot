@@ -6,7 +6,7 @@ from discord import app_commands
 import os
 import json
 
-with open("cogs/jsons/settings.json") as json_file:
+with open("immersion_bot/cogs/jsons/settings.json") as json_file:
     data_dict = json.load(json_file)
     guild_id = data_dict["guild_id"]
 
