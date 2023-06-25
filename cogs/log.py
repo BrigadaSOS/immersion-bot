@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-_DB_NAME = 'prod.db'
+_DB_NAME = '/mnt/immersion-bot/prod.db'
 
 with open("cogs/jsons/settings.json") as json_file:
     data_dict = json.load(json_file)
@@ -47,7 +47,7 @@ class Log(commands.Cog):
     @app_commands.choices(media_type = [Choice(name="Visual Novel", value="VN"), Choice(name="Manga", value="Manga"), Choice(name="Anime", value="Anime"), Choice(name="Book", value="Book"), Choice(name="Readtime", value="Readtime"), Choice(name="Listening", value="Listening"), Choice(name="Reading", value="Reading")])
     async def log(self, interaction: discord.Interaction, media_type: str, amount: str, name: Optional[str], comment: Optional[str], backlog: Optional[str]):
         await interaction.response.defer()
-        if interaction.channel.id != channelid: 
+        if interaction.channel.id != channelid:
         #if interaction.channel.id !=947813835715256393 or not isinstance(ctx.channel, discord.channel.DMChannel):
             return await interaction.response.send_message(ephemeral=True, content='You can only log in #immersion-log or DMs.')
         
@@ -87,14 +87,14 @@ class Log(commands.Cog):
             
             return lower_interval, current_points, upper_interval, rank_emoji, rank_name, next_rank_emoji, next_rank_name
         
-        store = Set_Goal("goals.db")
+        store = Set_Goal("/mnt/immersion-bot/goals.db")
         then = date.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
         now = interaction.created_at.replace(hour=0, minute=0, second=0, microsecond=0)
         
         goals = store.get_goals(interaction.user.id, (now, date)) + store.get_daily_goals(interaction.user.id) #getting goals for the current day and daily goals
         point_goals = store.get_point_goals(interaction.user.id, (now, date))# getting point goals
         
-        store = Store("prod.db")
+        store = Store('/mnt/immersion-bot/prod.db')
         first_date = date.replace(day=1, hour=0, minute=0, second=0) 
         calc_amount, format, msg, title = helpers.point_message_converter(media_type.upper(), amount, name)
         #returns weighed amount (i.e 1ep = 9.5 so weighed amount of 1 ANIME EP is 9.5), format (i.e chars, pages, etc), msg i.e 1/350 points/characters = x points, title is the anime/vn/manga title through anilist or vndb query

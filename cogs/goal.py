@@ -25,13 +25,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-_DB_NAME = 'prod.db'
+_DB_NAME = '/mnt/immersion-bot/prod.db'
 
 with open("cogs/jsons/settings.json") as json_file:
     data_dict = json.load(json_file)
     guildid = data_dict["guild_id"]
     channelid = data_dict["channel_id"]
-  
+
 #############################################################
 
 # class MyView(discord.ui.View):
@@ -187,7 +187,7 @@ class Goal(commands.Cog):
         
         # async def goals_row(discord_user_id, media_type, amount, text, created_at):
         #     return f'''- {amount} {helpers.media_type_format(media_type.value)} {(helpers.point_message_converter(media_type.value, amount, name))[3]}'''
-        store = Set_Goal("goals.db")
+        store = Set_Goal("/mtn/immersion-bot/goals.db")
         bool = store.check_goal_exists(interaction.user.id, media_type.upper(), amount, f"of {media_type.upper()}", datetime.now(), frequency, 'goals')
         if bool:
             return await interaction.response.send_message(ephemeral=True, content='You already set this goal.')
@@ -213,7 +213,7 @@ class Goal(commands.Cog):
         if amount in [float('inf'), float('-inf')]:
             return await interaction.response.send_message(ephemeral=True, content='No infinities allowed.')
         
-        store = Set_Goal("goals.db")
+        store = Set_Goal("/mnt/immersion-bot/goals.db")
         bool = store.check_goal_exists(interaction.user.id, media_type.upper(), amount, f"of {media_type.upper()}", datetime.now(), frequency, 'points')
         if bool:
             return await interaction.response.send_message(ephemeral=True, content='You already set this goal.')
@@ -234,7 +234,7 @@ class Goal(commands.Cog):
         now = datetime.now()
         
         timeframe = (day_start, now)
-        store = Set_Goal("goals.db")
+        store = Set_Goal("/mnt/immersion-bot/goals.db")
         goals = store.get_goals(interaction.user.id, timeframe)
         print(goals)
         goals = goals + store.get_daily_goals(interaction.user.id)
@@ -346,7 +346,7 @@ class Goal(commands.Cog):
     #     now = datetime.now()
         
     #     timeframe = (day_start, now)
-    #     store = Set_Goal("goals.db")
+    #     store = Set_Goal("/mnt/immersion-bot/goals.db")
     #     goals, g_table = store.get_goals(interaction.user.id, timeframe)
     #     goals = goals + store.get_daily_goals(interaction.user.id)
     #     point_goals, p_table = store.get_point_goals(interaction.user.id, timeframe)

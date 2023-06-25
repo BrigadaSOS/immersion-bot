@@ -22,13 +22,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-_DB_NAME = 'prod.db'
+_DB_NAME = '/mnt/immersion-bot/prod.db'
 
 with open("cogs/jsons/settings.json") as json_file:
     data_dict = json.load(json_file)
     guildid = data_dict["guild_id"]
     channelid = data_dict["channel_id"]
-    
+
 MULTIPLIERS = {
     'BOOK': 1,
     'MANGA': 0.2,
