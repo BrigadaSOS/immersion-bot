@@ -1,0 +1,83 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: immersion-bot-pvolume
+  namespace: discord
+  labels:
+    type: local
+    app: immersion-bot
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/mnt/immersion-bot"
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: immersion-bot-pvolume-claim
+  namespace: discord
+  labels:
+    app: immersion-bot
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: immersion-bot
+  namespace: discord
+  labels:
+    app: immersion-bot
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: immersion-bot
+  template:
+    metadata:
+      labels:
+        app: immersion-bot
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - image: immersion-bot
+          name: immersion-bot
+          envFrom:
+            - configMapRef:
+                name: immersion-bot-config
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            - mountPath: "/mnt/immersion-bot"
+              name: immersion-bot-vol
+      volumes:
+        - name: immersion-bot-vol
+          persistentVolumeClaim:
+            claimName: immersion-bot-pvolume-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: immersion-bot
+  namespace: discord
+  labels:
+    app: immersion-bot
+spec:
+  selector:
+    app: immersion-bot
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8080

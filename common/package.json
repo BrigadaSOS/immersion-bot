@@ -1,0 +1,10 @@
+{
+  "name": "@nadelog/common",
+  "version": "1.0.0",
+  "description": "Common utils for nadelog",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --build"
+  }
+}

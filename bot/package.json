@@ -1,0 +1,19 @@
+{
+  "name": "@nadelog/bot",
+  "version": "1.0.0",
+  "description": "Discord bot for immersion tracker",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --pretty --transpile-only src/index.ts",
+    "build": "tsc --build",
+    "start": "node dist/index.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix ."
+  },
+  "dependencies": {
+    "@nadelog/common": "^1.0.0",
+    "discord.js": "^14.11.0",
+    "dotenv": "^16.3.1"
+  }
+}
