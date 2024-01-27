@@ -1,6 +1,6 @@
 # immersion-bot
 
-TMW's immersion bot
+BrigadaSOS's immersion bot, forked from TMW's immersion bot.
 
 ## Setup
 
@@ -9,6 +9,7 @@ TMW's immersion bot
   - TOKEN: <discord_bot_token>
   - GUILD_ID: <discord_guild_id>
   - CHANNEL_ID: <discord_channel_id>
+- Run `python ./immersion-bot/launch_bot.py`
 
 ## Run on Docker
 ```

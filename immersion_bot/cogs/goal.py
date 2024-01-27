@@ -22,7 +22,7 @@ from vndb_thigh_highs.models import VN
 
 load_dotenv()
 
-_DB_NAME = "/mnt/immersion-bot/prod.db"
+_DB_NAME = os.environ["PROD_DB_PATH"]
 
 guildid = int(os.environ["GUILD_ID"])
 channelid = int(os.environ["CHANNEL_ID"])
@@ -401,7 +401,7 @@ class Goal(commands.Cog):
                 ephemeral=True, content="No infinities allowed."
             )
 
-        store = Set_Goal("/mnt/immersion-bot/goals.db")
+        store = Set_Goal(os.environ["GOALS_DB_PATH"])
         bool = store.check_goal_exists(
             interaction.user.id,
             media_type.upper(),
@@ -451,7 +451,7 @@ class Goal(commands.Cog):
         now = datetime.now()
 
         timeframe = (day_start, now)
-        store = Set_Goal("/mnt/immersion-bot/goals.db")
+        store = Set_Goal(os.environ["GOALS_DB_PATH"])
         goals = store.get_goals(interaction.user.id, timeframe)
         print(goals)
         goals = goals + store.get_daily_goals(interaction.user.id)
@@ -590,7 +590,7 @@ class Goal(commands.Cog):
     #     now = datetime.now()
 
     #     timeframe = (day_start, now)
-    #     store = Set_Goal("/mnt/immersion-bot/goals.db")
+    #     store = Set_Goal(os.environ["GOALS_DB_PATH"])
     #     goals, g_table = store.get_goals(interaction.user.id, timeframe)
     #     goals = goals + store.get_daily_goals(interaction.user.id)
     #     point_goals, p_table = store.get_point_goals(interaction.user.id, timeframe)

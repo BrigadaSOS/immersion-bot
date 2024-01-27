@@ -18,7 +18,7 @@ from sql import Set_Goal, Store
 
 load_dotenv()
 
-_DB_NAME = "/mnt/immersion-bot/prod.db"
+_DB_NAME = os.environ["PROD_DB_PATH"]
 
 guildid = int(os.environ["GUILD_ID"])
 channelid = int(os.environ["CHANNEL_ID"])
@@ -140,7 +140,7 @@ class Log(commands.Cog):
                 next_rank_name,
             )
 
-        store = Set_Goal("/mnt/immersion-bot/goals.db")
+        store = Set_Goal(os.environ["GOALS_DB_PATH"])
         then = date.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(
             days=1
         )
@@ -155,7 +155,7 @@ class Log(commands.Cog):
             interaction.user.id, (now, date)
         )  # getting point goals
 
-        store = Store("/mnt/immersion-bot/prod.db")
+        store = Store(os.environ["PROD_DB_PATH"])
         first_date = date.replace(day=1, hour=0, minute=0, second=0)
         calc_amount, format, msg, title = helpers.point_message_converter(
             media_type.upper(), amount, name

@@ -21,7 +21,7 @@ from sql import Store
 
 load_dotenv()
 
-_DB_NAME = "/mnt/immersion-bot/prod.db"
+_DB_NAME = os.environ["PROD_DB_PATH"]
 guildid = int(os.environ["GUILD_ID"])
 channelid = int(os.environ["CHANNEL_ID"])
 
