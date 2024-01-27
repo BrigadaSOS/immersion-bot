@@ -14,7 +14,7 @@ class BotManager(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="reload_cog", description="Reloads cogs.")
-    @app_commands.checks.has_permissions(administrator = True)
+    @app_commands.checks.has_permissions(administrator=True)
     async def reload_cog(self, interaction: discord.Interaction):
         pass
         # my_view = CogSelectView(timeout=1800)
@@ -28,7 +28,7 @@ class BotManager(commands.Cog):
         # )
 
     @app_commands.command(name="load", description="Loads cogs.")
-    @app_commands.checks.has_permissions(administrator = True)
+    @app_commands.checks.has_permissions(administrator=True)
     async def load(self, interaction: discord.Interaction, *, cog: str):
         await interaction.response.defer()
         try:
@@ -41,7 +41,7 @@ class BotManager(commands.Cog):
             await interaction.edit_original_response(content="**`SUCCESS`**")
 
     @app_commands.command(name="stop", description="Stops cogs.")
-    @app_commands.checks.has_permissions(administrator = True)
+    @app_commands.checks.has_permissions(administrator=True)
     async def stop(self, interaction: discord.Interaction):
         if interaction.command_failed:
             await interaction.response.send_message(
@@ -69,35 +69,36 @@ class BotManager(commands.Cog):
             f"Please select the cog you would like to reload.", view=view
         )
 
-    @app_commands.command(name="sync_global_commands", description="Syncs global slash commands.")
-    @app_commands.checks.has_permissions(administrator = True)
+    @app_commands.command(
+        name="sync_global_commands", description="Syncs global slash commands."
+    )
+    @app_commands.checks.has_permissions(administrator=True)
     async def sync_global_commands(self, interaction: discord.Interaction):
         await self.bot.tree.sync()
-        await interaction.response.send_message(
-            f"Synced global commands"
-        )
+        await interaction.response.send_message(f"Synced global commands")
 
     @app_commands.command(
         name="clear_global_commands", description="Clears all global commands."
     )
-    @app_commands.checks.has_permissions(administrator = True)
+    @app_commands.checks.has_permissions(administrator=True)
     async def clear_global_commands(self, interaction: discord.Interaction):
         self.bot.tree.clear_commands(guild=None)
         await self.bot.tree.sync()
         await interaction.response.send_message("Cleared global commands.")
 
     @app_commands.command(name="sync", description="Syncs slash commands to the guild.")
-    @app_commands.checks.has_permissions(administrator = True)
+    @app_commands.checks.has_permissions(administrator=True)
     async def sync(self, interaction: discord.Interaction):
         self.bot.tree.copy_global_to(guild=discord.Object(id=GUILD_ID))
         await self.bot.tree.sync(guild=discord.Object(id=GUILD_ID))
         await interaction.response.send_message(
             f"Synced commands to guild with id {GUILD_ID}."
         )
+
     @app_commands.command(
         name="clear_guild_commands", description="Clears all guild commands."
     )
-    @app_commands.checks.has_permissions(administrator = True)
+    @app_commands.checks.has_permissions(administrator=True)
     async def clear_guild_commands(self, interaction: discord.Interaction):
         self.bot.tree.clear_commands(guild=discord.Object(id=GUILD_ID))
         await self.bot.tree.sync(guild=discord.Object(id=GUILD_ID))
