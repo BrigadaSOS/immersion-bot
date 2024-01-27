@@ -7,6 +7,7 @@ from discord.ext import commands
 from discord.ui import Select, View
 
 GUILD_ID = int(os.environ["GUILD_ID"])
+ADMIN_ROLE_ID = os.environ["ADMIN_ROLE_ID"]
 
 
 class BotManager(commands.Cog):
@@ -14,7 +15,7 @@ class BotManager(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="load", description="Loads cogs.")
-    @app_commands.checks.has_permissions(administrator=True)
+    @app_commands.checks.has_role(ADMIN_ROLE_ID)
     async def load(self, interaction: discord.Interaction, *, cog: str):
         await interaction.response.defer()
         try:
@@ -27,7 +28,7 @@ class BotManager(commands.Cog):
             await interaction.edit_original_response(content="**`SUCCESS`**")
 
     @app_commands.command(name="stop", description="Stops cogs.")
-    @app_commands.checks.has_permissions(administrator=True)
+    @app_commands.checks.has_role(ADMIN_ROLE_ID)
     async def stop(self, interaction: discord.Interaction):
         if interaction.command_failed:
             await interaction.response.send_message(
@@ -58,7 +59,7 @@ class BotManager(commands.Cog):
     @app_commands.command(
         name="sync_global_commands", description="Syncs global slash commands."
     )
-    @app_commands.checks.has_permissions(administrator=True)
+    @app_commands.checks.has_role(ADMIN_ROLE_ID)
     async def sync_global_commands(self, interaction: discord.Interaction):
         await self.bot.tree.sync()
         await interaction.response.send_message(f"Synced global commands")
@@ -66,14 +67,14 @@ class BotManager(commands.Cog):
     @app_commands.command(
         name="clear_global_commands", description="Clears all global commands."
     )
-    @app_commands.checks.has_permissions(administrator=True)
+    @app_commands.checks.has_role(ADMIN_ROLE_ID)
     async def clear_global_commands(self, interaction: discord.Interaction):
         self.bot.tree.clear_commands(guild=None)
         await self.bot.tree.sync()
         await interaction.response.send_message("Cleared global commands.")
 
     @app_commands.command(name="sync", description="Syncs slash commands to the guild.")
-    @app_commands.checks.has_permissions(administrator=True)
+    @app_commands.checks.has_role(ADMIN_ROLE_ID)
     async def sync(self, interaction: discord.Interaction):
         self.bot.tree.copy_global_to(guild=discord.Object(id=GUILD_ID))
         await self.bot.tree.sync(guild=discord.Object(id=GUILD_ID))
@@ -84,7 +85,7 @@ class BotManager(commands.Cog):
     @app_commands.command(
         name="clear_guild_commands", description="Clears all guild commands."
     )
-    @app_commands.checks.has_permissions(administrator=True)
+    @app_commands.checks.has_role(ADMIN_ROLE_ID)
     async def clear_guild_commands(self, interaction: discord.Interaction):
         self.bot.tree.clear_commands(guild=discord.Object(id=GUILD_ID))
         await self.bot.tree.sync(guild=discord.Object(id=GUILD_ID))

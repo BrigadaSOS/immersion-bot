@@ -187,13 +187,13 @@ class Log(commands.Cog):
         backlog="""Registra en un día anterior. Formato aceptado: [yyyy-mm-dd]. Ejemplo: 2024-02-01"""
     )
     async def log_ln(
-            self,
-            interaction: discord.Interaction,
-            caracteres: int,
-            tiempo: str,
-            nombre: str,
-            comentario: Optional[str],
-            backlog: Optional[str],
+        self,
+        interaction: discord.Interaction,
+        caracteres: int,
+        tiempo: str,
+        nombre: str,
+        comentario: Optional[str],
+        backlog: Optional[str],
     ):
         await interaction.response.defer()
 
@@ -231,13 +231,13 @@ class Log(commands.Cog):
     @app_commands.describe(
         backlog="""Registra en un día anterior. Formato aceptado: [yyyy-mm-dd]. Ejemplo: 2024-02-01"""
     )
-    async def log_listening(
-            self,
-            interaction: discord.Interaction,
-            tiempo: str,
-            nombre: str,
-            comentario: Optional[str],
-            backlog: Optional[str],
+    async def log_readtime(
+        self,
+        interaction: discord.Interaction,
+        tiempo: str,
+        nombre: str,
+        comentario: Optional[str],
+        backlog: Optional[str],
     ):
         await interaction.response.defer()
 
@@ -538,72 +538,75 @@ class Log(commands.Cog):
         interaction: discord.Interaction,
         current: str,
     ) -> List[app_commands.Choice[str]]:
-        await interaction.response.defer()
+        print("Autocompleting")
         media_type = interaction.namespace["media_type"]
         suggestions = []
         url = ""
 
-        if media_type == "VN":
-            url = "https://api.vndb.org/kana/vn"
-            data = {
-                "filters": ["search", "=", f"{current}"],
-                "fields": "title, alttitle",
-            }  # default no. of results is 10
-
-        elif media_type == "Anime" or media_type == "Manga":
-            url = "https://graphql.anilist.co"
-            query = f"""
-            query ($page: Int, $perPage: Int, $title: String) {{
-                Page(page: $page, perPage: $perPage) {{
-                    pageInfo {{
-                        total
-                        perPage
-                    }}
-                    media (search: $title, type: {media_type.upper()}) {{
-                        id
-                        title {{
-                            romaji
-                            native
-                        }}
-                    }}
-                }}
-            }}
-            """
-
-            variables = {"title": current, "page": 1, "perPage": 10}
-
-            data = {"query": query, "variables": variables}
-
-        if not url:
-            return []
-
-        async with aiohttp.ClientSession() as session:
-            async with session.post(url, json=data) as resp:
-                log.info(resp.status)
-                json_data = await resp.json()
-
-                if media_type == "VN":
-                    suggestions = [
-                        (result["title"], result["id"])
-                        for result in json_data["results"]
-                    ]
-
-                elif media_type == "Anime" or media_type == "Manga":
-                    suggestions = [
-                        (
-                            f"{result['title']['romaji']} ({result['title']['native']})",
-                            result["id"],
-                        )
-                        for result in json_data["data"]["Page"]["media"]
-                    ]
-
-                await asyncio.sleep(0)
-
-                return [
-                    app_commands.Choice(name=title, value=str(id))
-                    for title, id in suggestions
-                    if current.lower() in title.lower()
-                ]
+        return []
+        #
+        # if media_type == "VN":
+        #     url = "https://api.vndb.org/kana/vn"
+        #     data = {
+        #         "filters": ["search", "=", f"{current}"],
+        #         "fields": "title, alttitle",
+        #     }  # default no. of results is 10
+        #
+        # elif media_type == "Anime" or media_type == "Manga":
+        #     url = "https://graphql.anilist.co"
+        #     query = f"""
+        #     query ($page: Int, $perPage: Int, $title: String) {{
+        #         Page(page: $page, perPage: $perPage) {{
+        #             pageInfo {{
+        #                 total
+        #                 perPage
+        #             }}
+        #             media (search: $title, type: {media_type.upper()}) {{
+        #                 id
+        #                 title {{
+        #                     romaji
+        #                     native
+        #                 }}
+        #             }}
+        #         }}
+        #     }}
+        #     """
+        #
+        #     variables = {"title": current, "page": 1, "perPage": 10}
+        #
+        #     data = {"query": query, "variables": variables}
+        #
+        # if not url:
+        #     return []
+        #
+        # async with aiohttp.ClientSession() as session:
+        #     async with session.post(url, json=data) as resp:
+        #         log.info(resp.status)
+        #         json_data = await resp.json()
+        #
+        #         if media_type == "VN":
+        #             suggestions = [
+        #                 (result["title"], result["id"])
+        #                 for result in json_data["results"]
+        #             ]
+        #
+        #         elif media_type == "Anime" or media_type == "Manga":
+        #             suggestions = [
+        #                 (
+        #                     f"{result['title']['romaji']} ({result['title']['native']})",
+        #                     result["id"],
+        #                 )
+        #                 for result in json_data["data"]["Page"]["media"]
+        #             ]
+        #
+        #         await asyncio.sleep(0)
+        #
+        #         return [
+        #             app_commands.Choice(name=title, value=str(id))
+        #             for title, id in suggestions
+        #             if current.lower() in title.lower()
+        #         ]
+        #
 
 
 async def setup(bot: commands.Bot) -> None:

@@ -11,11 +11,11 @@ class SqliteEnum(Enum):
 
 class MediaType(SqliteEnum):
     # As it is
-    ANIME = "ANIME" # Done
-    MANGA = "MANGA" # Done
-    VN = "VN" # Done
+    ANIME = "ANIME"  # Done
+    MANGA = "MANGA"  # Done
+    VN = "VN"  # Done
     LN = "LN"
-    LISTENING = "LISTENING" # Done
+    LISTENING = "LISTENING"  # Done
     READTIME = "READTIME"
     ANYTHING = "ANYTHING"  # ANYTHING as an option for setting a point goal
 

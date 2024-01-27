@@ -40,9 +40,7 @@ class Leaderboard(commands.Cog):
             Choice(name="Yearly", value="Yearly"),
         ]
     )
-    @app_commands.choices(
-        media_type=helpers.get_logeable_media_type_choices()
-    )
+    @app_commands.choices(media_type=helpers.get_logeable_media_type_choices())
     @app_commands.describe(
         date="""See past leaderboards, combine it wit timeframes: [year-month-day] Example: '2022-12-29'."""
     )

@@ -105,9 +105,7 @@ class Goal(commands.Cog):
     @app_commands.describe(
         amount="""Episode to watch, characters or pages to read. Time to read/listen in [hr:min] or [min] for example '1.30' or '25'."""
     )
-    @app_commands.choices(
-        media_type=helpers.get_logeable_media_type_choices()
-    )
+    @app_commands.choices(media_type=helpers.get_logeable_media_type_choices())
     @app_commands.describe(
         name="""You can use vndb IDs for VN and Anilist codes for Anime, Manga and Light Novels"""
     )
@@ -184,7 +182,10 @@ class Goal(commands.Cog):
     )
     @app_commands.describe(amount="""Points to log.""")
     @app_commands.choices(
-        media_type=[*helpers.get_logeable_media_type_choices(), Choice(name="Anything", value=MediaType.ANYTHING.value)]
+        media_type=[
+            *helpers.get_logeable_media_type_choices(),
+            Choice(name="Anything", value=MediaType.ANYTHING.value),
+        ]
     )
     @app_commands.choices(frequency=[Choice(name="Daily", value="Daily")])
     @app_commands.describe(frequency="Make this your daily goal for the month.")
@@ -219,7 +220,7 @@ class Goal(commands.Cog):
             f"de {media_type.upper()}",
             datetime.now(),
             frequency,
-            "points", # Do no translate, this is the table name
+            "points",  # Do no translate, this is the table name
         )
         if bool:
             return await interaction.response.send_message(

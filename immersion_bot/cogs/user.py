@@ -42,6 +42,7 @@ class SqliteEnum(Enum):
         if protocol is sqlite3.PrepareProtocol:
             return self.name
 
+
 class User(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
@@ -193,9 +194,7 @@ class User(commands.Cog):
             Choice(name="Año", value="Yearly"),
         ]
     )
-    @app_commands.choices(
-        media_type=helpers.get_logeable_media_type_choices()
-    )
+    @app_commands.choices(media_type=helpers.get_logeable_media_type_choices())
     @app_commands.describe(
         date="""See past user overviews, combine it wit timeframes: [year-month-day] Example: '2022-12-29'."""
     )

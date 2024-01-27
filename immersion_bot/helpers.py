@@ -20,6 +20,7 @@ class SqliteEnum(Enum):
         if protocol is sqlite3.PrepareProtocol:
             return self.name
 
+
 def _to_amount(media_type, amount):
     if media_type == MediaType.ANIME.value:
         return amount * 9.5
@@ -38,14 +39,15 @@ def _to_amount(media_type, amount):
 
 
 def get_logeable_media_type_choices():
-      return [
-            Choice(name="Anime", value=MediaType.ANIME.value),
-            Choice(name="Manga", value=MediaType.MANGA.value),
-            Choice(name="Visual Novels", value=MediaType.VN.value),
-            Choice(name="Light Novels", value=MediaType.LN.value),
-            Choice(name="Readtime", value=MediaType.READTIME.value),
-            Choice(name="Listening", value=MediaType.LISTENING.value),
-        ]
+    return [
+        Choice(name="Anime", value=MediaType.ANIME.value),
+        Choice(name="Manga", value=MediaType.MANGA.value),
+        Choice(name="Visual Novels", value=MediaType.VN.value),
+        Choice(name="Light Novels", value=MediaType.LN.value),
+        Choice(name="Readtime", value=MediaType.READTIME.value),
+        Choice(name="Listening", value=MediaType.LISTENING.value),
+    ]
+
 
 def multiplied_points(logs):
     dictes = defaultdict(list)

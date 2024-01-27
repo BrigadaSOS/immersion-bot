@@ -51,9 +51,7 @@ class Export(commands.Cog):
             Choice(name="Yearly", value="Yearly"),
         ]
     )
-    @app_commands.choices(
-        media_type=helpers.get_logeable_media_type_choices()
-    )
+    @app_commands.choices(media_type=helpers.get_logeable_media_type_choices())
     @app_commands.describe(
         date="""See past user overviews, combine it wit timeframes: [year-month-day] Example: '2022-12-29'."""
     )
@@ -96,7 +94,8 @@ class Export(commands.Cog):
         for i, row in enumerate(logs):
             worksheet.write("A" + str(row_Index), row.media_type.value)
             worksheet.write(
-                "B" + str(row_Index), helpers._to_amount(row.media_type.value, row.amount)
+                "B" + str(row_Index),
+                helpers._to_amount(row.media_type.value, row.amount),
             )
             worksheet.write("C" + str(row_Index), str(row.note))
             worksheet.write("D" + str(row_Index), str(row.created_at))
