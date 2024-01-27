@@ -22,11 +22,10 @@ guildid = int(os.environ["GUILD_ID"])
 channelid = int(os.environ["CHANNEL_ID"])
 
 MULTIPLIERS = {
-    "BOOK": 1,
+    "ANIME": 9.5,
     "MANGA": 0.2,
     "VN": 1 / 350,
-    "ANIME": 9.5,
-    "READING": 1 / 350,
+    "LN": 1 / 350,
     "LISTENING": 0.45,
     "READTIME": 0.45,
 }
@@ -75,7 +74,8 @@ class Export(commands.Cog):
     ):
         if interaction.channel.id != channelid:
             return await interaction.response.send_message(
-                ephemeral=True, content="Solo puedes logear en el canal #registro-inmersión."
+                ephemeral=True,
+                content="Solo puedes logear en el canal #registro-inmersión.",
             )
 
         await interaction.response.defer()

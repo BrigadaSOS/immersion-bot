@@ -63,7 +63,8 @@ class Leaderboard(commands.Cog):
     ):
         if interaction.channel.id != channelid:
             return await interaction.response.send_message(
-                ephemeral=True, content="Solo puedes logear en el canal #registro-inmersión."
+                ephemeral=True,
+                content="Solo puedes logear en el canal #registro-inmersión.",
             )
 
         await interaction.response.defer()

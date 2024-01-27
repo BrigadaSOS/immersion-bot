@@ -39,7 +39,14 @@ class Store:
         self.conn.row_factory = namedtuple_factory
 
     def new_log(
-        self, discord_guild_id, discord_user_id, media_type, amount, time, note, created_at
+        self,
+        discord_guild_id,
+        discord_user_id,
+        media_type,
+        amount,
+        time,
+        note,
+        created_at,
     ):
         with self.conn:
             self.conn.execute(

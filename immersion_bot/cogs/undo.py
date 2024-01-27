@@ -15,6 +15,7 @@ GUILD_ID = int(os.environ["GUILD_ID"])
 
 #############################################################
 
+
 class Undo(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -29,9 +30,10 @@ class Undo(commands.Cog):
         self,
         interaction: discord.Interaction,
     ):
-
         await interaction.response.defer()
-        return await interaction.edit_original_response(content="Este comando aún no está implementado.")
+        return await interaction.edit_original_response(
+            content="Este comando aún no está implementado."
+        )
 
 
 #         message_link = message_link.split('/')

@@ -12,7 +12,6 @@ from AnilistPython import Anilist
 from discord import app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
-from discord.ui import Select
 from dotenv import load_dotenv
 from sql import Set_Goal, Store
 from vndb_thigh_highs import VNDB
@@ -109,10 +108,10 @@ class Goal(commands.Cog):
                 vn = vns[0]
                 return (
                     amount,
-                    "chars",
-                    f"1/350 points/characters → +{round(amount, 2)} points",
+                    "caracteres",
+                    f"1/350 puntos/caracteres → **+{round(amount, 2)} puntos**",
                     (
-                        "on "
+                        "en "
                         + "["
                         + vn.title
                         + "]"
@@ -126,15 +125,15 @@ class Goal(commands.Cog):
             if name:
                 return (
                     amount,
-                    "chars",
-                    f"1/350 points/characters → +{round(amount, 2)} points",
+                    "caracteres",
+                    f"1/350 puntos/caracteres → **+{round(amount, 2)} puntos**",
                     name,
                 )
             return (
                 amount,
-                "chars",
-                f"1/350 points/characters → +{round(amount, 2)} points",
-                f"of {media_type}",
+                "caracteres",
+                f"1/350 puntos/caracteres → **+{round(amount, 2)} puntos**",
+                f"de {media_type}",
             )
 
         if media_type == "Manga":
@@ -146,10 +145,10 @@ class Goal(commands.Cog):
                 )
                 return (
                     amount,
-                    "pgs",
-                    f"0.2 points per page → +{round(amount, 2)} points",
+                    "páginas",
+                    f"0.2 puntos por página → **+{round(amount, 2)} puntos**",
                     (
-                        "on "
+                        "en "
                         + "["
                         + anilist.get_manga_with_id(name)["name_english"]
                         + "]"
@@ -163,30 +162,30 @@ class Goal(commands.Cog):
             if name:
                 return (
                     amount,
-                    "pgs",
-                    f"0.2 points per page → +{round(amount, 2)} points",
+                    "páginas",
+                    f"0.2 puntos por página → **+{round(amount, 2)} puntos**",
                     name,
                 )
             return (
                 amount,
-                "pgs",
-                f"0.2 points per page → +{round(amount, 2)} points",
-                f"of {media_type}",
+                "páginas",
+                f"0.2 puntos por página → **+{round(amount, 2)} puntos**",
+                f"en {media_type}",
             )
 
         if media_type == "Book":
             if name:
                 return (
                     amount,
-                    "pgs",
-                    f"1 point per page → +{round(amount, 2)} points",
-                    ("on " + name if name else ""),
+                    "páginas",
+                    f"1 puntos por página → **+{round(amount, 2)} puntos**",
+                    ("en " + name if name else ""),
                 )
             return (
                 amount,
-                "pgs",
-                f"1 point per page → +{round(amount, 2)} points",
-                f"of {media_type}",
+                "páginas",
+                f"1 puntos por página → **+{round(amount, 2)} puntos**",
+                f"en {media_type}",
             )
 
         if media_type == "Anime":
@@ -198,10 +197,10 @@ class Goal(commands.Cog):
                 )
                 return (
                     amount,
-                    "eps",
-                    f"9.5 points per eps → +{round(amount, 2)} points",
+                    "episodios",
+                    f"9.5 puntos por episodios → **+{round(amount, 2)} puntos**",
                     (
-                        "on "
+                        "en "
                         + "["
                         + anilist.get_anime_with_id(name)["name_english"]
                         + "]"
@@ -215,15 +214,15 @@ class Goal(commands.Cog):
             if name:
                 return (
                     amount,
-                    "eps",
-                    f"9.5 points per eps → +{round(amount, 2)} points",
+                    "episodios",
+                    f"9.5 puntos por episodio → **+{round(amount, 2)} puntos**",
                     name,
                 )
             return (
                 amount,
-                "eps",
-                f"9.5 points per eps → +{round(amount, 2)} points",
-                f"of {media_type}",
+                "episodios",
+                f"9.5 puntos por episodio → **+{round(amount, 2)} puntos**",
+                f"en {media_type}",
             )
 
         if media_type == "Reading":
@@ -248,7 +247,7 @@ class Goal(commands.Cog):
                 return (
                     amount,
                     "mins",
-                    f"0.45 points/min of listening → +{round(amount, 2)} points",
+                    f"0.45 puntos/min of listening → +{round(amount, 2)} points",
                     name,
                 )
             return (
@@ -263,15 +262,15 @@ class Goal(commands.Cog):
             if name:
                 return (
                     amount,
-                    "mins",
-                    f"0.45 points/min of listening → +{round(amount, 2)} points",
+                    "minutos",
+                    f"0.45 puntos/minuto de escucha → **+{round(amount, 2)} puntos**",
                     name,
                 )
             return (
                 amount,
-                "mins",
-                f"0.45 points/min of listening → +{round(amount, 2)} points",
-                f"of {media_type}",
+                "minutos",
+                f"0.45 puntos/minuto de escucha → **+{round(amount, 2)} puntos**",
+                f"en {media_type}",
             )
 
     @app_commands.command(
@@ -306,7 +305,8 @@ class Goal(commands.Cog):
     ):
         if interaction.channel.id != channelid:
             return await interaction.response.send_message(
-                ephemeral=True, content="Solo puedes logear en el canal #registro-inmersión."
+                ephemeral=True,
+                content="Solo puedes logear en el canal #registro-inmersión.",
             )
 
         if media_type == "Listening" or media_type == "Readtime":
@@ -388,7 +388,8 @@ class Goal(commands.Cog):
     ):
         if interaction.channel.id != channelid:
             return await interaction.response.send_message(
-                ephemeral=True, content="Solo puedes logear en el canal #registro-inmersión."
+                ephemeral=True,
+                content="Solo puedes logear en el canal #registro-inmersión.",
             )
 
         if not amount > 0:
@@ -406,10 +407,10 @@ class Goal(commands.Cog):
             interaction.user.id,
             media_type.upper(),
             amount,
-            f"of {media_type.upper()}",
+            f"de {media_type.upper()}",
             datetime.now(),
             frequency,
-            "points",
+            "points", # Do no translate, this is the table name
         )
         if bool:
             return await interaction.response.send_message(
@@ -420,7 +421,7 @@ class Goal(commands.Cog):
             interaction.user.id,
             media_type.upper(),
             amount,
-            f"of {media_type.upper()}",
+            f"de {media_type.upper()}",
             datetime.now(),
             frequency,
         )
@@ -435,7 +436,8 @@ class Goal(commands.Cog):
     async def goals(self, interaction: discord.Interaction):
         if interaction.channel.id != channelid:
             return await interaction.response.send_message(
-                ephemeral=True, content="Solo puedes logear en el canal #registro-inmersión."
+                ephemeral=True,
+                content="Solo puedes logear en el canal #registro-inmersión.",
             )
 
         async def goals_row(

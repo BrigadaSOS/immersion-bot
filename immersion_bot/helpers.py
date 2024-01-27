@@ -19,30 +19,28 @@ class SqliteEnum(Enum):
 
 
 class MediaType(SqliteEnum):
-    BOOK = "BOOK"
-    MANGA = "MANGA"
+    # As it is
+    ANIME = "ANIME" # Done
+    MANGA = "MANGA" # Done
+    VN = "VN" # Done
+    LN = "LN"
+    LISTENING = "LISTENING" # Done
     READTIME = "READTIME"
-    READING = "READING"
-    VN = "VN"
-    ANIME = "ANIME"
-    LISTENING = "LISTENING"
 
 
 def _to_amount(media_type, amount):
-    if media_type == "BOOK":
-        return amount
-    elif media_type == "MANGA":
+    if media_type == MediaType.ANIME.value:
+        return amount * 9.5
+    elif media_type == MediaType.MANGA.value:
         return amount * 0.2
     elif media_type == "VN":
         return amount / 350.0
-    elif media_type == "ANIME":
-        return amount * 9.5
+    elif media_type == "LN":
+        return amount / 350.0
     elif media_type == "LISTENING":
         return amount * 0.45
     elif media_type == "READTIME":
         return amount * 0.45
-    elif media_type == "READING":
-        return amount / 350.0
     else:
         raise Exception(f"Unknown media type: {media_type}")
 
@@ -60,9 +58,7 @@ def multiplied_points(logs):
 
 
 def media_type_format(media_type):
-    if media_type == "BOOK":
-        return "páginas"
-    elif media_type == "MANGA":
+    if media_type == "MANGA":
         return "páginas"
     elif media_type == "VN":
         return "caracteres"
@@ -70,7 +66,7 @@ def media_type_format(media_type):
         return "episodios"
     elif media_type == "LISTENING":
         return "minutos"
-    elif media_type == "READING":
+    elif media_type == "LN":
         return "caracteres"
     elif media_type == "READTIME":
         return "minutos"
@@ -96,15 +92,29 @@ def millify(n):
 
 
 from dateparser_data.settings import default_parsers
+
 parsers = [parser for parser in default_parsers]
+
+
 def elapsed_time_to_mins(time: str):
-    if time.isdigit():
-        return time
+    try:
+        return int(time)
 
-    parsed_time = dateparser.parse(time, settings={'PARSERS': parsers, 'RELATIVE_BASE': datetime(2024, 1, 1, 0, 0, 0), 'PREFER_DATES_FROM': 'future'})
-    elapsed_time_mins = round((parsed_time - datetime(2024, 1, 1, 0, 0, 0)).total_seconds() / 60)
+    except ValueError:  # If the time is a fuzzy string we have to parse it first
+        relative_datetime = datetime(2024, 1, 1, 0, 0, 0)
+        parsed_time = dateparser.parse(
+            time,
+            settings={
+                "PARSERS": parsers,
+                "RELATIVE_BASE": relative_datetime,
+                "PREFER_DATES_FROM": "future",
+            },
+        )
+        elapsed_time_mins = round(
+            (parsed_time - datetime(2024, 1, 1, 0, 0, 0)).total_seconds() / 60
+        )
 
-    return elapsed_time_mins
+        return elapsed_time_mins
 
 
 def pairwise(iterable):
@@ -127,7 +137,7 @@ ACHIEVEMENTS = {
         float("inf"),
     ],
     "ANIME": [1, 12, 25, 100, 200, 500, 800, 1500, float("inf")],
-    "READING": [
+    "LN": [
         1,
         50_000,
         100_000,
@@ -138,7 +148,6 @@ ACHIEVEMENTS = {
         10_000_000,
         float("inf"),
     ],
-    "BOOK": [1, 100, 250, 1000, 2500, 5000, 10_000, 20_000, float("inf")],
     "MANGA": [1, 250, 1250, 5000, 10_000, 25_000, 50_000, 100_000, float("inf")],
     "LISTENING": [1, 250, 500, 2000, 5000, 10_000, 25_000, 50_000, float("inf")],
     "READTIME": [1, 250, 500, 2000, 5000, 10_000, 25_000, 50_000, float("inf")],
@@ -170,12 +179,11 @@ ACHIEVEMENT_EMOJIS = [
 
 def calc_achievements(amount_by_media_type):
     abmt = amount_by_media_type
-    # Combine Book and Reading
-    if MediaType.BOOK in abmt or MediaType.READING in abmt:
-        abmt[MediaType.BOOK] = (
-            abmt.get(MediaType.BOOK, 0) + abmt.get(MediaType.READING, 0) / 350.0
-        )
-        abmt.pop(MediaType.READING, None)
+    # if MediaType.BOOK in abmt or MediaType.READING in abmt:
+    #     abmt[MediaType.BOOK] = (
+    #         abmt.get(MediaType.BOOK, 0) + abmt.get(MediaType.READING, 0) / 350.0
+    #     )
+    #     abmt.pop(MediaType.READING, None)
     return abmt
 
 
@@ -216,10 +224,10 @@ def point_message_converter(media_type, amount, name):
             vn = vns[0]
             return (
                 amount,
-                "chars",
-                f"1/350 points/characters → +{round(amount, 2)} points",
+                "caracteres",
+                f"1/350 puntos/caracteres → **+{round(amount, 2)} puntos**",
                 (
-                    "of "
+                    "en "
                     + "["
                     + vn.title
                     + "]"
@@ -233,15 +241,15 @@ def point_message_converter(media_type, amount, name):
         if name:
             return (
                 amount,
-                "chars",
-                f"1/350 points/characters → +{round(amount, 2)} points",
+                "caracteres",
+                f"1/350 puntos/caracteres → **+{round(amount, 2)} puntos**",
                 name,
             )
         return (
             amount,
-            "chars",
-            f"1/350 points/characters → +{round(amount, 2)} points",
-            f"of {media_type}",
+            "caracteres",
+            f"1/350 puntos/caracteres → **+{round(amount, 2)} puntos**",
+            f"en {media_type}",
         )
 
     if media_type == "MANGA":
@@ -269,13 +277,13 @@ def point_message_converter(media_type, amount, name):
         if name:
             return (
                 amount,
-                "pgs",
+                "páginas",
                 f"0.2 puntos por página → **+{round(amount, 2)} puntos**",
                 name,
             )
         return (
             amount,
-            "pgs",
+            "páginas",
             f"0.2 puntos por página → **+{round(amount, 2)} puntos**",
             f"de {media_type}",
         )
@@ -368,15 +376,15 @@ def point_message_converter(media_type, amount, name):
         if name:
             return (
                 amount,
-                "mins",
-                f"0.45 points/min of listening → +{round(amount, 2)} points",
+                "minutos",
+                f"0.45 puntos/minuto de escucha → **+{round(amount, 2)} puntos**",
                 name,
             )
         return (
             amount,
-            "mins",
-            f"0.45 points/min of listening → +{round(amount, 2)} points",
-            f"of {media_type}",
+            "minutos",
+            f"0.45 puntos/minuto de escucha → **+{round(amount, 2)} puntos**",
+            f"en {media_type}",
         )
 
 
@@ -395,14 +403,14 @@ def start_end_tf(now, timeframe):
         end = (now.replace(day=28) + timedelta(days=4)) - timedelta(
             days=(now.replace(day=28) + timedelta(days=4)).day
         )
-        title = f"""Ranking Mensual ({now.strftime("%B")} {now.year})"""
+        title = f"""Ranking Mensual ({now.strftime("%B").title()} {now.year})"""
 
     if timeframe == "All Time":
         start = datetime(
             year=2021, month=3, day=4, hour=0, minute=0, second=0, microsecond=0
         )
         end = now
-        title = f"""Ranking global hasta {now.strftime("%B")} {now.year}"""
+        title = f"""Ranking global hasta {now.strftime("%B").title()} {now.year}"""
 
     if timeframe == "Yearly":
         start = now.date().replace(month=1, day=1)

@@ -15,15 +15,15 @@ from discord import app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
 from dotenv import load_dotenv
-from sql import Store
+from sql import Store, MediaType
 
 #############################################################
 
 load_dotenv()
 
 _DB_NAME = os.environ["PROD_DB_PATH"]
-guildid = int(os.environ["GUILD_ID"])
-channelid = int(os.environ["CHANNEL_ID"])
+GUILD_ID = int(os.environ["GUILD_ID"])
+CHANNEL_ID = int(os.environ["CHANNEL_ID"])
 
 MULTIPLIERS = {
     "BOOK": 1,
@@ -43,24 +43,13 @@ class SqliteEnum(Enum):
         if protocol is sqlite3.PrepareProtocol:
             return self.name
 
-
-class MediaType(SqliteEnum):
-    BOOK = "BOOK"
-    MANGA = "MANGA"
-    READTIME = "READTIME"
-    READING = "READING"
-    VN = "VN"
-    ANIME = "ANIME"
-    LISTENING = "LISTENING"
-
-
 class User(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.myguild = self.bot.get_guild(guildid)
+        self.myguild = self.bot.get_guild(GUILD_ID)
 
     async def start_end_tf(self, now, timeframe):
         if timeframe == "Weekly":
@@ -194,7 +183,9 @@ class User(commands.Cog):
 
         return embed, file
 
-    @app_commands.command(name="user", description=f"Información de inmersión de un usuario.")
+    @app_commands.command(
+        name="user", description=f"Información de inmersión de un usuario."
+    )
     @app_commands.describe(timeframe="""Span of logs used.""")
     @app_commands.choices(
         timeframe=[
@@ -226,9 +217,10 @@ class User(commands.Cog):
         media_type: Optional[str],
         date: Optional[str],
     ):
-        if interaction.channel.id != channelid:
+        if interaction.channel.id != CHANNEL_ID:
             return await interaction.response.send_message(
-                ephemeral=True, content="Solo puedes logear en el canal #registro-inmersión."
+                ephemeral=True,
+                content="Solo puedes logear en el canal #registro-inmersión.",
             )
 
         await interaction.response.defer()

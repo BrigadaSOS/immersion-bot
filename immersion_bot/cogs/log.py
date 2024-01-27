@@ -5,13 +5,12 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 import aiohttp
-import dateparser
 import discord
 import helpers
 from discord import app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
-from sql import Set_Goal, Store
+from sql import Set_Goal, Store, MediaType
 
 #############################################################
 
@@ -28,8 +27,8 @@ log = logging.getLogger(__name__)
 
 
 class Log(commands.Cog):
-
     log_group = app_commands.Group(name="log", description="Log commands")
+
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
@@ -37,57 +36,184 @@ class Log(commands.Cog):
     async def on_ready(self):
         self.myguild = self.bot.get_guild(guildid)
 
-
     @log_group.command(name="anime", description="Registra un anime")
     @app_commands.describe(episodios="Número de episodios vistos")
     @app_commands.describe(
         tiempo="""Tiempo, si no se especifica el bot asume 20 min por episodio. Formatos aceptados: 01:20, 20, 20min, 1h"""
     )
-    @app_commands.describe(
-        nombre="""Nombre del anime. Puedes usar códigos de Anilist para encontrar resultados concretos"""
-    )
-    @app_commands.describe(
-        comentario="""Comentario extra a registrar"""
-    )
+    @app_commands.describe(nombre="""Nombre del anime""")
+    @app_commands.describe(comentario="""Comentario extra a registrar""")
     @app_commands.describe(
         backlog="""Registra en un día anterior. Formato aceptado: [yyyy-mm-dd]. Ejemplo: 2024-02-01"""
     )
-    async def log_anime(self, interaction: discord.Interaction, episodios: int, tiempo: Optional[str], nombre: str, comentario: Optional[str], backlog: Optional[str]):
+    async def log_anime(
+        self,
+        interaction: discord.Interaction,
+        episodios: int,
+        tiempo: Optional[str],
+        nombre: str,
+        comentario: Optional[str],
+        backlog: Optional[str],
+    ):
         await interaction.response.defer()
 
         if episodios > 20:
-            return await interaction.edit_original_response(content="No se pueden registrar más de 20 episodios de una vez.")
+            return await interaction.edit_original_response(
+                content="No se pueden registrar más de 20 episodios de una vez."
+            )
+        if episodios < 0:
+            return await interaction.edit_original_response(
+                content="Solo se permiten números positivos."
+            )
 
         time_spent_min = 20 * episodios
         if tiempo:
             time_spent_min = helpers.elapsed_time_to_mins(tiempo)
+        if time_spent_min < 0:
+            return await interaction.edit_original_response(
+                content="Solo se permiten números positivos."
+            )
 
-        return await self.log(interaction, "ANIME", episodios, time_spent_min, nombre, comentario, backlog)
+        return await self.log(
+            interaction,
+            MediaType.ANIME.value,
+            episodios,
+            time_spent_min,
+            nombre,
+            comentario,
+            backlog,
+        )
 
     @log_group.command(name="manga", description="Registra un manga")
     @app_commands.describe(paginas="Número de páginas leídas")
     @app_commands.describe(
         tiempo="""Tiempo estimado que ha estado leyendo. Formatos aceptados: 01:20, 20, 20min, 1h"""
     )
-    @app_commands.describe(
-        nombre="""Nombre del manga. Puedes usar códigos de Anilist para encontrar resultados concretos."""
-    )
-    @app_commands.describe(
-        comentario="""Comentario extra a registrar"""
-    )
+    @app_commands.describe(nombre="""Nombre del manga""")
+    @app_commands.describe(comentario="""Comentario extra a registrar""")
     @app_commands.describe(
         backlog="""Registra en un día anterior. Formato aceptado: [yyyy-mm-dd]. Ejemplo: 2024-02-01"""
     )
-    async def log_manga(self, interaction: discord.Interaction, paginas: int, tiempo: str, nombre: str, comentario: Optional[str], backlog: Optional[str]):
+    async def log_manga(
+        self,
+        interaction: discord.Interaction,
+        paginas: int,
+        tiempo: str,
+        nombre: str,
+        comentario: Optional[str],
+        backlog: Optional[str],
+    ):
         await interaction.response.defer()
 
         if paginas > 3000:
-            return await interaction.edit_original_response(content="No se pueden registrar más de 3000 páginas de una vez.")
+            return await interaction.edit_original_response(
+                content="No se pueden registrar más de 3000 páginas de una vez."
+            )
+        if paginas < 0:
+            return await interaction.edit_original_response(
+                content="Solo se permiten números positivos."
+            )
 
         time_spent_min = helpers.elapsed_time_to_mins(tiempo)
+        if time_spent_min < 0:
+            return await interaction.edit_original_response(
+                content="Solo se permiten números positivos."
+            )
 
-        return await self.log(interaction, "MANGA", paginas, time_spent_min, nombre, comentario, backlog)
+        return await self.log(
+            interaction,
+            MediaType.MANGA.value,
+            paginas,
+            time_spent_min,
+            nombre,
+            comentario,
+            backlog,
+        )
 
+    @log_group.command(name="vn", description="Registra progreso en una VN")
+    @app_commands.describe(caracteres="Número de caracteres leídos")
+    @app_commands.describe(
+        tiempo="""Tiempo estimado que ha estado leyendo. Formatos aceptados: 01:20, 20, 20min, 1h"""
+    )
+    @app_commands.describe(nombre="""Nombre de la VN""")
+    @app_commands.describe(comentario="""Comentario extra a registrar""")
+    @app_commands.describe(
+        backlog="""Registra en un día anterior. Formato aceptado: [yyyy-mm-dd]. Ejemplo: 2024-02-01"""
+    )
+    async def log_vn(
+        self,
+        interaction: discord.Interaction,
+        caracteres: int,
+        tiempo: str,
+        nombre: str,
+        comentario: Optional[str],
+        backlog: Optional[str],
+    ):
+        await interaction.response.defer()
+
+        if caracteres > 200000:
+            return await interaction.edit_original_response(
+                content="No se pueden registrar más de 200000 caracteres de una vez."
+            )
+        if caracteres < 0:
+            return await interaction.edit_original_response(
+                content="Solo se permiten números positivos."
+            )
+
+        time_spent_min = helpers.elapsed_time_to_mins(tiempo)
+        if time_spent_min < 0:
+            return await interaction.edit_original_response(
+                content="Solo se permiten números positivos."
+            )
+
+        return await self.log(
+            interaction,
+            MediaType.VN.value,
+            caracteres,
+            time_spent_min,
+            nombre,
+            comentario,
+            backlog,
+        )
+
+    @log_group.command(name="listening", description="Registra minutos de escucha")
+    @app_commands.describe(
+        tiempo="""Tiempo estimado que ha estado escuchando contenido. Formatos aceptados: 01:20, 20, 20min, 1h"""
+    )
+    @app_commands.describe(nombre="""Nombre de la VN""")
+    @app_commands.describe(comentario="""Comentario extra a registrar""")
+    @app_commands.describe(
+        backlog="""Registra en un día anterior. Formato aceptado: [yyyy-mm-dd]. Ejemplo: 2024-02-01"""
+    )
+    async def log_listening(
+        self,
+        interaction: discord.Interaction,
+        tiempo: str,
+        nombre: str,
+        comentario: Optional[str],
+        backlog: Optional[str],
+    ):
+        await interaction.response.defer()
+
+        time_spent_min = helpers.elapsed_time_to_mins(tiempo)
+        if time_spent_min > 480:
+            return await interaction.edit_original_response(
+                content="No se pueden registrar más de 480 minutos de una vez."
+            )
+        if time_spent_min < 0:
+            return await interaction.edit_original_response(
+                content="Solo se permiten números positivos."
+            )
+
+        return await self.log(
+            interaction,
+            MediaType.LISTENING.value,
+            time_spent_min,
+            time_spent_min,
+            nombre,
+            comentario,
+            backlog,
+        )
 
     async def log(
         self,
@@ -100,26 +226,18 @@ class Log(commands.Cog):
         backlog: Optional[str],
     ):
         if interaction.channel.id != channelid:
-            return await interaction.edit_original_response(content="Solo puedes logear en el canal #registro-inmersión.")
+            return await interaction.edit_original_response(
+                content="Solo puedes logear en el canal #registro-inmersión."
+            )
 
-        print(f"[LOGGING FOR {interaction.user.name}]: {media_type} - {amount}u - {time} mins - {name} - {comment} - {backlog}")
-
-        # Handeling amount when its given as a time
-        if media_type == "Listening" or media_type == "Readtime":
-            if ":" in amount:
-                hours, min = amount.split(":")
-                amount = int(hours) * 60 + int(min)
-            else:
-                amount = int(amount)
-        else:
-            amount = int(amount)
-
-        if not amount > 0:
-            return await interaction.edit_original_response(content="Solo se permiten números positivos.")
+        print(
+            f"[LOGGING FOR {interaction.user.name}]: {media_type} - {amount}u - {time} mins - {name} - {comment} - {backlog}"
+        )
 
         if amount in [float("inf"), float("-inf")]:
-            return await interaction.edit_original_response(content="No se permite infinito.")
-
+            return await interaction.edit_original_response(
+                content="No se permite infinito."
+            )
 
         if backlog:
             now = datetime.now()
@@ -133,7 +251,9 @@ class Log(commands.Cog):
                 microsecond=0,
             )
             if now < created_at:
-                return await interaction.edit_original_response(content="""No puedes registrar logs en el futuro.""")
+                return await interaction.edit_original_response(
+                    content="""No puedes registrar logs en el futuro."""
+                )
             if now > created_at:
                 date = created_at
         if not backlog:
@@ -223,6 +343,7 @@ class Log(commands.Cog):
         ) = check_achievements(interaction.user.id, media_type.upper())
         # getting new achievement progress
 
+        print(f"11111111111 {amount}")
         current_points = store.get_logs_by_user(
             interaction.user.id, None, (first_date, date)
         )  # current total points
@@ -273,6 +394,8 @@ class Log(commands.Cog):
                     )
                     continue
 
+        print(f"222222 {amount}")
+
         # handling point_goals
         if point_goals:
             for points_row in point_goals:
@@ -289,38 +412,37 @@ class Log(commands.Cog):
                                 )
                             )
                         goals_description.append(
-                            f"""- {sum(points)}/{points_row.amount} points {points_row.text} {"(" + points_row.freq + ")" if points_row.freq != None else ""}"""
+                            f"""- {sum(points)}/{points_row.amount} puntos {points_row.text} {"(" + points_row.freq + ")" if points_row.freq != None else ""}"""
                         )
                         continue
                     else:
                         if points_row.media_type.value == "ANYTHING":
                             points = []
-                            for media, amount in rl_media_type_amount_l:
-                                points.append(helpers._to_amount(media.value, amount))
+                            for media, amount2 in rl_media_type_amount_l:
+                                points.append(helpers._to_amount(media.value, amount2))
                             goals_description.append(
-                                f"""- {"~~" + str(round(sum(points), 0)) + "/" + str(points_row.amount) + " points " + points_row.text + (" (" + points_row.freq + ") " if points_row.freq != None else "") + "~~" if sum(points) >= points_row.amount else str(round(sum(points), 0)) + "/" + str(points_row.amount) + " points " + points_row.text + (" (" + points_row.freq + ") " if points_row.freq != None else "")}"""
+                                f"""- {"~~" + str(round(sum(points), 0)) + "/" + str(points_row.amount2) + " puntos " + points_row.text + (" (" + points_row.freq + ") " if points_row.freq != None else "") + "~~" if sum(points) >= points_row.amount else str(round(sum(points), 0)) + "/" + str(points_row.amount) + " puntos " + points_row.text + (" (" + points_row.freq + ") " if points_row.freq != None else "")}"""
                             )
                             continue
                         else:
                             goals_description.append(
-                                f"""- 0/{points_row.amount} points {points_row.text} {"(" + points_row.freq + ")" if points_row.freq != None else ""}"""
+                                f"""- 0/{points_row.amount} puntos {points_row.text} {"(" + points_row.freq + ")" if points_row.freq != None else ""}"""
                             )
                             break
                 else:
                     goals_description.append(
-                        f"""- 0/{points_row.amount} points {points_row.text} {"(" + points_row.freq + ")" if points_row.freq != None else ""}"""
+                        f"""- 0/{points_row.amount} puntos {points_row.text} {"(" + points_row.freq + ")" if points_row.freq != None else ""}"""
                     )
                     continue
         goals_description = "\n".join(goals_description)
-
         print(goals_description)
 
         # final log message
         await interaction.edit_original_response(
-            content=f'''### {interaction.user.mention} ha logeado {round(amount,2)} {format} de {title} en {time} minutos\n{msg}\n\n{"""__**Objetivos:**__
+            content=f'''### {interaction.user.mention} ha logeado {amount} {format} de {title} en {time} minutos\n{msg}\n\n{"""__**Objetivos:**__
 """ + str(goals_description) + """
-""" if goals_description else ""}{date.strftime("%B")}: ~~{helpers.millify(sum(i for i, j in list(old_weighed_points_mediums.values())))}~~ → **{helpers.millify(sum(i for i, j in list(current_weighed_points_mediums.values())))}**\n{"""
-**Siguiente logro: **""" + new_next_rank_name + " " + new_next_rank_emoji + " in " + str(new_rank_achievement-current_achievemnt_points) + " " + helpers.media_type_format(media_type.upper()) if old_next_achievement == new_rank_achievement else """
+""" if goals_description else ""}**{date.strftime("%B").title()}:** ~~{helpers.millify(sum(i for i, j in list(old_weighed_points_mediums.values())))}~~ → **{helpers.millify(sum(i for i, j in list(current_weighed_points_mediums.values())))}**\n{"""
+**Siguiente logro: **""" + new_next_rank_name + " " + new_next_rank_emoji + " en " + str(new_rank_achievement-current_achievemnt_points) + " " + helpers.media_type_format(media_type.upper()) if old_next_achievement == new_rank_achievement else """
 **Logro desbloqueado!: **""" + new_rank_name + " " + new_emoji + " " + str(int(current_rank_achievement)) + " " + helpers.media_type_format(media_type.upper()) + """
 **Siguiente logro:** """ + new_next_rank_name + " " + new_next_rank_emoji + " " + str(int(new_rank_achievement)) + " " + helpers.media_type_format(media_type.upper())}\n\n{">>> " + comment if comment else ""}'''
         )
