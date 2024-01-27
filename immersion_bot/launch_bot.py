@@ -3,7 +3,6 @@ import logging
 import os
 import sys
 import traceback
-import locale
 
 import discord
 from discord import AppInfo
@@ -47,7 +46,6 @@ class MyBot(commands.Bot):
             intents=discord.Intents.all(),
             tree_cls=CustomCommandTree,
         )
-        locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")
 
     async def on_error(self, event_method: str, /, *args, **kwargs):
         log.exception("Ignoring exception in %s", event_method)
