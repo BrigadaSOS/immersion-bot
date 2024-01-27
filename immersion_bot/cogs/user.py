@@ -26,11 +26,10 @@ GUILD_ID = int(os.environ["GUILD_ID"])
 CHANNEL_ID = int(os.environ["CHANNEL_ID"])
 
 MULTIPLIERS = {
-    "BOOK": 1,
+    "ANIME": 9.5,
     "MANGA": 0.2,
     "VN": 1 / 350,
-    "ANIME": 9.5,
-    "READING": 1 / 350,
+    "LN": 1 / 350,
     "LISTENING": 0.45,
     "READTIME": 0.45,
 }
@@ -134,12 +133,11 @@ class User(commands.Cog):
         # print(df)
 
         color_dict = {
-            "BOOK": "tab:orange",
-            "MANGA": "tab:red",
-            "READTIME": "tab:pink",
-            "READING": "tab:green",
-            "VN": "tab:cyan",
             "ANIME": "tab:purple",
+            "MANGA": "tab:red",
+            "VN": "tab:cyan",
+            "LN": "tab:green",
+            "READTIME": "tab:pink",
             "LISTENING": "tab:blue",
         }
 
@@ -166,7 +164,7 @@ class User(commands.Cog):
             ),
         )
         amounts_by_media_desc = "\n".join(
-            f"* **{key}**: {helpers.millify(weighed_points_mediums[key][1])} {helpers.media_type_format(key)} → {helpers.millify(weighed_points_mediums[key][0])} pts"
+            f"* **{key}**: {helpers.millify(weighed_points_mediums[key][1])} {helpers.media_type_format(key)} → {helpers.millify(weighed_points_mediums[key][0])} puntos"
             for key in weighed_points_mediums
         )
         embed.add_field(
@@ -196,15 +194,7 @@ class User(commands.Cog):
         ]
     )
     @app_commands.choices(
-        media_type=[
-            Choice(name="Visual Novels", value="VN"),
-            Choice(name="Manga", value="MANGA"),
-            Choice(name="Anime", value="ANIME"),
-            Choice(name="Book", value="BOOK"),
-            Choice(name="Readtime", value="READTIME"),
-            Choice(name="Listening", value="LISTENING"),
-            Choice(name="Reading", value="READING"),
-        ]
+        media_type=helpers.get_logeable_media_type_choices()
     )
     @app_commands.describe(
         date="""See past user overviews, combine it wit timeframes: [year-month-day] Example: '2022-12-29'."""

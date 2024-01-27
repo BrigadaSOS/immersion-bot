@@ -10,7 +10,7 @@ from discord import app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
 from dotenv import load_dotenv
-from sql import Store
+from sql import Store, MediaType
 
 #############################################################
 
@@ -52,15 +52,7 @@ class Export(commands.Cog):
         ]
     )
     @app_commands.choices(
-        media_type=[
-            Choice(name="Visual Novels", value="VN"),
-            Choice(name="Manga", value="MANGA"),
-            Choice(name="Anime", value="ANIME"),
-            Choice(name="Book", value="BOOK"),
-            Choice(name="Readtime", value="READTIME"),
-            Choice(name="Listening", value="LISTENING"),
-            Choice(name="Reading", value="READING"),
-        ]
+        media_type=helpers.get_logeable_media_type_choices()
     )
     @app_commands.describe(
         date="""See past user overviews, combine it wit timeframes: [year-month-day] Example: '2022-12-29'."""
@@ -93,24 +85,6 @@ class Export(commands.Cog):
                 microsecond=0,
             )
 
-        def _to_amount(media_type, points):
-            if media_type == "BOOK":
-                return points
-            elif media_type == "MANGA":
-                return points * 0.2
-            elif media_type == "VN":
-                return points / 350.0
-            elif media_type == "ANIME":
-                return points * 9.5
-            elif media_type == "LISTENING":
-                return points * 0.45
-            elif media_type == "READTIME":
-                return points * 0.45
-            elif media_type == "READING":
-                return points / 350.0
-            else:
-                raise Exception(f"Unknown media type: {media_type}")
-
         now, start, end, title = helpers.start_end_tf(now, timeframe)
         store = Store(_DB_NAME)
         logs = store.get_logs_by_user(429002040488755211, media_type, (now, start, end))
@@ -122,7 +96,7 @@ class Export(commands.Cog):
         for i, row in enumerate(logs):
             worksheet.write("A" + str(row_Index), row.media_type.value)
             worksheet.write(
-                "B" + str(row_Index), _to_amount(row.media_type.value, row.amount)
+                "B" + str(row_Index), helpers._to_amount(row.media_type.value, row.amount)
             )
             worksheet.write("C" + str(row_Index), str(row.note))
             worksheet.write("D" + str(row_Index), str(row.created_at))

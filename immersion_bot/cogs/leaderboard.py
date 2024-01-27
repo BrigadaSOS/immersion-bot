@@ -41,15 +41,7 @@ class Leaderboard(commands.Cog):
         ]
     )
     @app_commands.choices(
-        media_type=[
-            Choice(name="Visual Novels", value="VN"),
-            Choice(name="Manga", value="MANGA"),
-            Choice(name="Anime", value="ANIME"),
-            Choice(name="Book", value="BOOK"),
-            Choice(name="Readtime", value="READTIME"),
-            Choice(name="Listening", value="LISTENING"),
-            Choice(name="Reading", value="READING"),
-        ]
+        media_type=helpers.get_logeable_media_type_choices()
     )
     @app_commands.describe(
         date="""See past leaderboards, combine it wit timeframes: [year-month-day] Example: '2022-12-29'."""

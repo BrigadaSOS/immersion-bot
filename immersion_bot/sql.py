@@ -10,13 +10,13 @@ class SqliteEnum(Enum):
 
 
 class MediaType(SqliteEnum):
-    BOOK = "BOOK"
-    MANGA = "MANGA"
+    # As it is
+    ANIME = "ANIME" # Done
+    MANGA = "MANGA" # Done
+    VN = "VN" # Done
+    LN = "LN"
+    LISTENING = "LISTENING" # Done
     READTIME = "READTIME"
-    READING = "READING"
-    VN = "VN"
-    ANIME = "ANIME"
-    LISTENING = "LISTENING"
     ANYTHING = "ANYTHING"  # ANYTHING as an option for setting a point goal
 
 
@@ -92,11 +92,10 @@ class Store:
                     discord_user_id,
                     SUM(
                     CASE
-                        WHEN media_type = 'BOOK' THEN amount
+                        WHEN media_type = 'ANIME' THEN amount * 9.5
                         WHEN media_type = 'MANGA' THEN amount * 0.2
                         WHEN media_type = 'VN' THEN amount * (1.0 / 350.0)
-                        WHEN media_type = 'ANIME' THEN amount * 9.5
-                        WHEN media_type = 'READING' THEN amount * (1.0 / 350.0)
+                        WHEN media_type = 'LN' THEN amount * (1.0 / 350.0)
                         WHEN media_type = 'READTIME' THEN amount * 0.45
                         WHEN media_type = 'LISTENING' THEN amount * 0.45
                         ELSE 0
