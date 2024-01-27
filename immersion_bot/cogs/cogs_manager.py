@@ -7,7 +7,7 @@ from discord.ext import commands
 from discord.ui import Select, View
 
 GUILD_ID = int(os.environ["GUILD_ID"])
-ADMIN_ROLE_ID = os.environ["ADMIN_ROLE_ID"]
+ADMIN_ROLE_ID = int(os.environ["ADMIN_ROLE_ID"])
 
 
 class BotManager(commands.Cog):
