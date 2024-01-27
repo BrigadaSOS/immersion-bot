@@ -3,5 +3,10 @@ env/
 __pycache__/
 dist/
 
+bot/
+common/
+node_modules/
+
+
 .env
 .venv
