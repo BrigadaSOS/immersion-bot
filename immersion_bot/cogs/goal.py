@@ -306,7 +306,7 @@ class Goal(commands.Cog):
     ):
         if interaction.channel.id != channelid:
             return await interaction.response.send_message(
-                ephemeral=True, content="You can only log in #immersion-log or DMs."
+                ephemeral=True, content="Solo puedes logear en el canal #registro-inmersión."
             )
 
         if media_type == "Listening" or media_type == "Readtime":
@@ -388,7 +388,7 @@ class Goal(commands.Cog):
     ):
         if interaction.channel.id != channelid:
             return await interaction.response.send_message(
-                ephemeral=True, content="You can only log in #immersion-log or DMs."
+                ephemeral=True, content="Solo puedes logear en el canal #registro-inmersión."
             )
 
         if not amount > 0:
@@ -435,7 +435,7 @@ class Goal(commands.Cog):
     async def goals(self, interaction: discord.Interaction):
         if interaction.channel.id != channelid:
             return await interaction.response.send_message(
-                ephemeral=True, content="You can only log in #immersion-log or DMs."
+                ephemeral=True, content="Solo puedes logear en el canal #registro-inmersión."
             )
 
         async def goals_row(
@@ -584,7 +584,7 @@ class Goal(commands.Cog):
     # @app_commands.command(name='change_goals', description=f'Change your immersion goals.')
     # async def change_goals(self, interaction: discord.Interaction):
     #     if interaction.channel.id != 947813835715256393:
-    #         return await interaction.response.send_message(ephemeral=True, content='You can only log in #immersion-log or DMs.')
+    #         return await interaction.response.send_message(ephemeral=True, content='Solo puedes logear en el canal #registro-inmersión.')
 
     #     day_start = interaction.created_at.replace(hour=0, minute=0, second=0, microsecond=0)
     #     now = datetime.now()

@@ -12,6 +12,8 @@ requests = "*"
 python-dotenv = "*"
 matplotlib = "*"
 pandas = "*"
+parsedatetime = "*"
+dateparser = "*"
 
 [dev-packages]
 black = "*"

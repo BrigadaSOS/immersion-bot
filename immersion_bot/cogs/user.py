@@ -167,21 +167,21 @@ class User(commands.Cog):
         fig.savefig(f"{interaction.user.id}_overview_chart.png")
 
     async def create_embed(self, timeframe, interaction, weighed_points_mediums, logs):
-        embed = discord.Embed(title=f"{timeframe} Immersion Overview")
-        embed.add_field(name="**User**", value=interaction.user.display_name)
-        embed.add_field(name="**Timeframe**", value=timeframe)
+        embed = discord.Embed(title=f"Información de inmersión ー {timeframe}")
+        embed.add_field(name="**Usuario**", value=interaction.user.display_name)
+        embed.add_field(name="**Periodo**", value=timeframe)
         embed.add_field(
-            name="**Points**",
+            name="**Puntos**",
             value=helpers.millify(
                 sum(i for i, j in list(weighed_points_mediums.values()))
             ),
         )
         amounts_by_media_desc = "\n".join(
-            f"{key}: {helpers.millify(weighed_points_mediums[key][1])} {helpers.media_type_format(key)} → {helpers.millify(weighed_points_mediums[key][0])} pts"
+            f"* **{key}**: {helpers.millify(weighed_points_mediums[key][1])} {helpers.media_type_format(key)} → {helpers.millify(weighed_points_mediums[key][0])} pts"
             for key in weighed_points_mediums
         )
         embed.add_field(
-            name="**Breakdown**", value=amounts_by_media_desc or "None", inline=False
+            name="**Desglose**", value=amounts_by_media_desc or "None", inline=False
         )
 
         await self.generate_trend_graph(
@@ -194,14 +194,14 @@ class User(commands.Cog):
 
         return embed, file
 
-    @app_commands.command(name="user", description=f"Immersion overview of a user.")
+    @app_commands.command(name="user", description=f"Información de inmersión de un usuario.")
     @app_commands.describe(timeframe="""Span of logs used.""")
     @app_commands.choices(
         timeframe=[
-            Choice(name="Monthly", value="Monthly"),
-            Choice(name="All Time", value="All Time"),
-            Choice(name="Weekly", value="Weekly"),
-            Choice(name="Yearly", value="Yearly"),
+            Choice(name="Mes", value="Monthly"),
+            Choice(name="Todo", value="All Time"),
+            Choice(name="Semana", value="Weekly"),
+            Choice(name="Año", value="Yearly"),
         ]
     )
     @app_commands.choices(
@@ -228,7 +228,7 @@ class User(commands.Cog):
     ):
         if interaction.channel.id != channelid:
             return await interaction.response.send_message(
-                ephemeral=True, content="You can only log in #immersion-log or DMs."
+                ephemeral=True, content="Solo puedes logear en el canal #registro-inmersión."
             )
 
         await interaction.response.defer()
@@ -248,10 +248,11 @@ class User(commands.Cog):
 
         now, start, end, title = helpers.start_end_tf(now, timeframe)
         store = Store(_DB_NAME)
-        logs = store.get_logs_by_user(236887182571339777, media_type, (start, end))
+        logs = store.get_logs_by_user(user.id, media_type, (start, end))
+        print(logs)
         if logs == []:
             return await interaction.edit_original_response(
-                content="No logs were found."
+                content="No se ha encontrado ningún log."
             )
 
         weighed_points_mediums = helpers.multiplied_points(logs)
@@ -259,7 +260,7 @@ class User(commands.Cog):
             timeframe, interaction, weighed_points_mediums, logs
         )
 
-        await interaction.delete_original_response()
+        await interaction.edit_original_response(content="Perfil de usuario:")
         await interaction.channel.send(embed=embed, file=file)
 
 

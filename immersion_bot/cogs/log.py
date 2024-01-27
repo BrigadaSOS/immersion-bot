@@ -1,15 +1,14 @@
 import asyncio
-import json
 import logging
 import os
 from datetime import datetime, timedelta
 from typing import List, Optional
 
 import aiohttp
+import dateparser
 import discord
 import helpers
 from discord import app_commands
-from discord.app_commands import Choice
 from discord.ext import commands
 from dotenv import load_dotenv
 from sql import Set_Goal, Store
@@ -29,6 +28,8 @@ log = logging.getLogger(__name__)
 
 
 class Log(commands.Cog):
+
+    log_group = app_commands.Group(name="log", description="Log commands")
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
@@ -36,43 +37,72 @@ class Log(commands.Cog):
     async def on_ready(self):
         self.myguild = self.bot.get_guild(guildid)
 
-    @app_commands.command(name="log", description=f"Log your immersion")
+
+    @log_group.command(name="anime", description="Registra un anime")
+    @app_commands.describe(episodios="Número de episodios vistos")
     @app_commands.describe(
-        amount="""Episodes watched, characters or pages read. Time read/listened in [hr:min] or [min] for example '1.30' or '25'."""
-    )
-    @app_commands.describe(comment="""Comment""")
-    @app_commands.describe(
-        backlog="""Backlog to this date: [year-month-day] Example: December 1st 2022 '2022-12-01' """
+        tiempo="""Tiempo, si no se especifica el bot asume 20 min por episodio. Formatos aceptados: 01:20, 20, 20min, 1h"""
     )
     @app_commands.describe(
-        name="""You can use vndb IDs and titles for VN and Anilist codes for Anime, Manga and Light Novels"""
+        nombre="""Nombre del anime. Puedes usar códigos de Anilist para encontrar resultados concretos"""
     )
-    @app_commands.choices(
-        media_type=[
-            Choice(name="Visual Novel", value="VN"),
-            Choice(name="Manga", value="Manga"),
-            Choice(name="Anime", value="Anime"),
-            Choice(name="Book", value="Book"),
-            Choice(name="Readtime", value="Readtime"),
-            Choice(name="Listening", value="Listening"),
-            Choice(name="Reading", value="Reading"),
-        ]
+    @app_commands.describe(
+        comentario="""Comentario extra a registrar"""
     )
+    @app_commands.describe(
+        backlog="""Registra en un día anterior. Formato aceptado: [yyyy-mm-dd]. Ejemplo: 2024-02-01"""
+    )
+    async def log_anime(self, interaction: discord.Interaction, episodios: int, tiempo: Optional[str], nombre: str, comentario: Optional[str], backlog: Optional[str]):
+        await interaction.response.defer()
+
+        if episodios > 20:
+            return await interaction.edit_original_response(content="No se pueden registrar más de 20 episodios de una vez.")
+
+        time_spent_min = 20 * episodios
+        if tiempo:
+            time_spent_min = helpers.elapsed_time_to_mins(tiempo)
+
+        return await self.log(interaction, "ANIME", episodios, time_spent_min, nombre, comentario, backlog)
+
+    @log_group.command(name="manga", description="Registra un manga")
+    @app_commands.describe(paginas="Número de páginas leídas")
+    @app_commands.describe(
+        tiempo="""Tiempo estimado que ha estado leyendo. Formatos aceptados: 01:20, 20, 20min, 1h"""
+    )
+    @app_commands.describe(
+        nombre="""Nombre del manga. Puedes usar códigos de Anilist para encontrar resultados concretos."""
+    )
+    @app_commands.describe(
+        comentario="""Comentario extra a registrar"""
+    )
+    @app_commands.describe(
+        backlog="""Registra en un día anterior. Formato aceptado: [yyyy-mm-dd]. Ejemplo: 2024-02-01"""
+    )
+    async def log_manga(self, interaction: discord.Interaction, paginas: int, tiempo: str, nombre: str, comentario: Optional[str], backlog: Optional[str]):
+        await interaction.response.defer()
+
+        if paginas > 3000:
+            return await interaction.edit_original_response(content="No se pueden registrar más de 3000 páginas de una vez.")
+
+        time_spent_min = helpers.elapsed_time_to_mins(tiempo)
+
+        return await self.log(interaction, "MANGA", paginas, time_spent_min, nombre, comentario, backlog)
+
+
     async def log(
         self,
         interaction: discord.Interaction,
         media_type: str,
-        amount: str,
+        amount: int,
+        time: int,
         name: Optional[str],
         comment: Optional[str],
         backlog: Optional[str],
     ):
-        await interaction.response.defer()
         if interaction.channel.id != channelid:
-            # if interaction.channel.id !=947813835715256393 or not isinstance(ctx.channel, discord.channel.DMChannel):
-            return await interaction.response.send_message(
-                ephemeral=True, content="You can only log in #immersion-log or DMs."
-            )
+            return await interaction.edit_original_response(content="Solo puedes logear en el canal #registro-inmersión.")
+
+        print(f"[LOGGING FOR {interaction.user.name}]: {media_type} - {amount}u - {time} mins - {name} - {comment} - {backlog}")
 
         # Handeling amount when its given as a time
         if media_type == "Listening" or media_type == "Readtime":
@@ -85,14 +115,11 @@ class Log(commands.Cog):
             amount = int(amount)
 
         if not amount > 0:
-            return await interaction.response.send_message(
-                ephemeral=True, content="Only positive numbers allowed."
-            )
+            return await interaction.edit_original_response(content="Solo se permiten números positivos.")
 
         if amount in [float("inf"), float("-inf")]:
-            return await interaction.response.send_message(
-                ephemeral=True, content="No infinities allowed."
-            )
+            return await interaction.edit_original_response(content="No se permite infinito.")
+
 
         if backlog:
             now = datetime.now()
@@ -106,9 +133,7 @@ class Log(commands.Cog):
                 microsecond=0,
             )
             if now < created_at:
-                return await interaction.response.send_message(
-                    ephemeral=True, content="""You can't backlog in the future."""
-                )
+                return await interaction.edit_original_response(content="""No puedes registrar logs en el futuro.""")
             if now > created_at:
                 date = created_at
         if not backlog:
@@ -182,6 +207,7 @@ class Log(commands.Cog):
             interaction.user.id,
             media_type.upper(),
             amount,
+            time,
             [title, comment],
             date,
         )  # log being registered
@@ -291,15 +317,15 @@ class Log(commands.Cog):
 
         # final log message
         await interaction.edit_original_response(
-            content=f'''{interaction.user.mention} logged {round(amount,2)} {format} {title}\n{msg}\n\n{"""__**Goal progression:**__
+            content=f'''### {interaction.user.mention} ha logeado {round(amount,2)} {format} de {title} en {time} minutos\n{msg}\n\n{"""__**Objetivos:**__
 """ + str(goals_description) + """
-""" if goals_description else ""}{date.strftime("%B")}: ~~{helpers.millify(sum(i for i, j in list(old_weighed_points_mediums.values())))}~~ → {helpers.millify(sum(i for i, j in list(current_weighed_points_mediums.values())))}\n{"""
-**Next Achievement: **""" + new_next_rank_name + " " + new_next_rank_emoji + " in " + str(new_rank_achievement-current_achievemnt_points) + " " + helpers.media_type_format(media_type.upper()) if old_next_achievement == new_rank_achievement else """
-**New Achievemnt Unlocked: **""" + new_rank_name + " " + new_emoji + " " + str(int(current_rank_achievement)) + " " + helpers.media_type_format(media_type.upper()) + """
-**Next Achievement:** """ + new_next_rank_name + " " + new_next_rank_emoji + " " + str(int(new_rank_achievement)) + " " + helpers.media_type_format(media_type.upper())}\n\n{">>> " + comment if comment else ""}'''
+""" if goals_description else ""}{date.strftime("%B")}: ~~{helpers.millify(sum(i for i, j in list(old_weighed_points_mediums.values())))}~~ → **{helpers.millify(sum(i for i, j in list(current_weighed_points_mediums.values())))}**\n{"""
+**Siguiente logro: **""" + new_next_rank_name + " " + new_next_rank_emoji + " in " + str(new_rank_achievement-current_achievemnt_points) + " " + helpers.media_type_format(media_type.upper()) if old_next_achievement == new_rank_achievement else """
+**Logro desbloqueado!: **""" + new_rank_name + " " + new_emoji + " " + str(int(current_rank_achievement)) + " " + helpers.media_type_format(media_type.upper()) + """
+**Siguiente logro:** """ + new_next_rank_name + " " + new_next_rank_emoji + " " + str(int(new_rank_achievement)) + " " + helpers.media_type_format(media_type.upper())}\n\n{">>> " + comment if comment else ""}'''
         )
 
-    @log.autocomplete("name")
+    @log_anime.autocomplete("nombre")
     async def log_autocomplete(
         self,
         interaction: discord.Interaction,

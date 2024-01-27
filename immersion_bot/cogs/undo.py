@@ -1,53 +1,39 @@
-import json
 import os
-import sqlite3
-import sys
-from datetime import date as new_date
-from datetime import datetime, timedelta
-from typing import Optional
 
 import discord
 from discord import app_commands
-from discord.app_commands import Choice
 from discord.ext import commands
-from sql import Store
+from dotenv import load_dotenv
 
-db_name = "logs.db"
 
-guildid = int(os.environ["GUILD_ID"])
+#############################################################
 
+load_dotenv()
+
+_DB_NAME = os.environ["PROD_DB_PATH"]
+GUILD_ID = int(os.environ["GUILD_ID"])
+
+#############################################################
 
 class Undo(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.guild = None
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.tmw = self.bot.get_guild(guildid)
+        self.guild = self.bot.get_guild(GUILD_ID)
 
-    @app_commands.command(name="undo", description="undo your log.")
-    @app_commands.checks.has_role("Moderator")
-    @app_commands.choices(
-        media=[
-            Choice(name="Book", value="BOOK"),
-            Choice(name="Manga", value="MANGA"),
-            Choice(name="Visual Novel", value="VN"),
-            Choice(name="Anime", value="ANIME"),
-            Choice(name="Listening", value="LISTENING"),
-            Choice(name="Readtime", value="READTIME"),
-        ]
-    )
+    @app_commands.command(name="undo", description="Deshacer el último log creado.")
     async def undo(
         self,
         interaction: discord.Interaction,
-        media: str,
-        amount: int,
-        message_link: str,
     ):
-        return
+
+        await interaction.response.defer()
+        return await interaction.edit_original_response(content="Este comando aún no está implementado.")
 
 
-#         await interaction.response.defer(ephemeral=True)
 #         message_link = message_link.split('/')
 #         channel = await self.bot.fetch_channel(message_link[5])
 #         message = await channel.fetch_message(message_link[6])

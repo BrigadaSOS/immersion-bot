@@ -1,5 +1,6 @@
 import itertools
 import math
+import dateparser
 import random
 import sqlite3
 from collections import defaultdict
@@ -60,19 +61,19 @@ def multiplied_points(logs):
 
 def media_type_format(media_type):
     if media_type == "BOOK":
-        return "pgs"
+        return "páginas"
     elif media_type == "MANGA":
-        return "pgs"
+        return "páginas"
     elif media_type == "VN":
-        return "chrs"
+        return "caracteres"
     elif media_type == "ANIME":
-        return "eps"
+        return "episodios"
     elif media_type == "LISTENING":
-        return "mins"
+        return "minutos"
     elif media_type == "READING":
-        return "chrs"
+        return "caracteres"
     elif media_type == "READTIME":
-        return "mins"
+        return "minutos"
     else:
         raise Exception(f"Unknown media type: {media_type}")
 
@@ -92,6 +93,18 @@ def millify(n):
     )
 
     return "{:.2f}{}".format(n / 10 ** (3 * millidx), millnames[millidx])
+
+
+from dateparser_data.settings import default_parsers
+parsers = [parser for parser in default_parsers]
+def elapsed_time_to_mins(time: str):
+    if time.isdigit():
+        return time
+
+    parsed_time = dateparser.parse(time, settings={'PARSERS': parsers, 'RELATIVE_BASE': datetime(2024, 1, 1, 0, 0, 0), 'PREFER_DATES_FROM': 'future'})
+    elapsed_time_mins = round((parsed_time - datetime(2024, 1, 1, 0, 0, 0)).total_seconds() / 60)
+
+    return elapsed_time_mins
 
 
 def pairwise(iterable):
@@ -134,14 +147,14 @@ ACHIEVEMENTS = {
 PT_ACHIEVEMENTS = [1, 100, 300, 1000, 2000, 10_000, 25_000, 100_000, float("inf")]
 
 ACHIEVEMENT_RANKS = [
-    "Beginner",
-    "Initiate",
-    "Apprentice",
-    "Hobbyist",
-    "Enthusiast",
+    "Principiante",
+    "Iniciado",
+    "Aprendiz",
+    "Amateur",
+    "Entusiasta",
     "Aficionado",
-    "Sage",
-    "Master",
+    "Sabio",
+    "Maestro",
 ]
 ACHIEVEMENT_EMOJIS = [
     ":new_moon:",
@@ -240,7 +253,7 @@ def point_message_converter(media_type, amount, name):
             return (
                 amount,
                 "pgs",
-                f"0.2 points per page → +{round(amount, 2)} points",
+                f"0.2 puntos por página → **+{round(amount, 2)} puntos**",
                 (
                     "of "
                     + "["
@@ -257,14 +270,14 @@ def point_message_converter(media_type, amount, name):
             return (
                 amount,
                 "pgs",
-                f"0.2 points per page → +{round(amount, 2)} points",
+                f"0.2 puntos por página → **+{round(amount, 2)} puntos**",
                 name,
             )
         return (
             amount,
             "pgs",
-            f"0.2 points per page → +{round(amount, 2)} points",
-            f"of {media_type}",
+            f"0.2 puntos por página → **+{round(amount, 2)} puntos**",
+            f"de {media_type}",
         )
 
     if media_type == "BOOK":
@@ -290,10 +303,10 @@ def point_message_converter(media_type, amount, name):
             updated_title = anilist.get_anime_with_id(name)[name_key].replace(" ", "-")
             return (
                 amount,
-                "eps",
-                f"9.5 points per eps → +{round(amount, 2)} points",
+                "episodios",
+                f"9.5 puntos por episodio → **+{round(amount, 2)} puntos**",
                 (
-                    "of "
+                    "de "
                     + "["
                     + anilist.get_anime_with_id(name)[name_key]
                     + "]"
@@ -307,15 +320,15 @@ def point_message_converter(media_type, amount, name):
         if name:
             return (
                 amount,
-                "eps",
-                f"9.5 points per eps → +{round(amount, 2)} points",
+                "episodios",
+                f"9.5 puntos por episodio → **+{round(amount, 2)} puntos**",
                 name,
             )
         return (
             amount,
-            "eps",
-            f"9.5 points per eps → +{round(amount, 2)} points",
-            f"of {media_type}",
+            "episodios",
+            f"9.5 puntos por episodio → **+{round(amount, 2)} puntos**",
+            f"de {media_type}",
         )
 
     if media_type == "READING":
@@ -375,26 +388,26 @@ def start_end_tf(now, timeframe):
         end = (start + timedelta(days=6)).replace(
             hour=0, minute=0, second=0, microsecond=0
         )
-        title = f"""{now.year}'s {timeframe} Leaderboard"""
+        title = f"""Ranking Semanal de {now.year}"""
 
     if timeframe == "Monthly":
         start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         end = (now.replace(day=28) + timedelta(days=4)) - timedelta(
             days=(now.replace(day=28) + timedelta(days=4)).day
         )
-        title = f"""Monthly ({now.strftime("%B")} {now.year}) Leaderboard"""
+        title = f"""Ranking Mensual ({now.strftime("%B")} {now.year})"""
 
     if timeframe == "All Time":
         start = datetime(
             year=2021, month=3, day=4, hour=0, minute=0, second=0, microsecond=0
         )
         end = now
-        title = f"""All time Leaderboard till {now.strftime("%B")} {now.year}"""
+        title = f"""Ranking global hasta {now.strftime("%B")} {now.year}"""
 
     if timeframe == "Yearly":
         start = now.date().replace(month=1, day=1)
         end = now.date().replace(month=12, day=31)
-        title = f"{now.year}'s Leaderboard"
+        title = f"Ranking de {now.year}"
 
     return now, start, end, title
 
@@ -419,65 +432,7 @@ EMOJI_TABLE = {
     # 'Yay': 658999234787278848,
     # 'NanaYes': 837211260155854849,
     # 'NanaYay': 837211306293067797,
-    "990": 921933172432863283,
-    "AYAYA": 848256559191687168,
-    "Angry": 688824902823706634,
-    "AnyaHeh": 855296982812983336,
-    "AnyaSweat": 854990671613788170,
-    "ArisuScream": 921872320375709747,
-    "CatBlush": 933089264030339083,
-    "CatRage": 936524311911600199,
-    "CatTup": 948511239401799681,
-    "ChikaTup": 918620369919828000,
-    "ChikaYada": 918622997051486298,
-    "ChubbyGero": 831348462305673286,
-    "ChubbyGeroSwag": 929124878047641690,
-    "Chuui": 872352719917187133,
-    "CoolCat": 783741575582580758,
-    "HillingGakkari": 928130226410651688,
-    "InuPero": 963127794194350110,
-    "KannaShoot": 678245463270490153,
-    "KimoiHuh": 931588710473031761,
-    "MakotoSad": 888194443134504990,
-    "NadeshikoUma": 921677406849363989,
-    "NanaCry": 877678258332782642,
-    "NanaJam": 882894763987177493,
-    "NanaSleep": 877678937940058172,
-    "NanaThink": 837209897706848266,
-    "NanaTired": 877678949130436658,
-    "NanaYay": 837211306293067797,
-    "NanaYes": 877679734547427349,
-    "NekoGero": 936524524231458897,
-    "NicoDab": 783746864138420254,
-    "NicoShy": 678245454823030784,
-    "NicoSmile": 783744823281713192,
-    "NicoSmug": 783747913808609300,
-    "PainPeko": 848260032407535636,
-    "Peek": 918616198302793739,
-    "PensiveCat": 783736784168681493,
-    "PensiveMonke": 783736811641503754,
-    "RageGero": 831361358259683350,
-    "RengeShrug": 826485174312763422,
-    "RoxyKowai": 914943594555641866,
-    "RubyCry": 918622902440575017,
-    "RubyPigiii": 918622959906742273,
-    "ShimarinDango": 921677567084359702,
-    "SorryGero": 831361306098794518,
-    "SugoiAA": 678245454068056097,
-    "TachiSmile": 688824520362164303,
-    "TohruFlex": 926637533994037328,
-    "TohruShrug": 827049208275009537,
-    "Yay": 658999234787278848,
-    "YouWaitWhat": 918622871700504577,
-    "Yousoroo": 698293340881289221,
-    "Yousoroo2": 709339172602904586,
-    "YuiPeace": 918623813552447529,
-    "YuiShrug": 827051628347654164,
-    "ajatt": 783749154807087134,
-    "akkoShrug": 688824479220105231,
-    "anki": 688802971089371185,
-    "baka": 848256505852985394,
-    "bakalisten": 937213856407777360,
+    "bakaLeer": 1137699591123390535,
 }
 
 

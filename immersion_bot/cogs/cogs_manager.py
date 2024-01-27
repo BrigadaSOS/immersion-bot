@@ -13,20 +13,6 @@ class BotManager(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @app_commands.command(name="reload_cog", description="Reloads cogs.")
-    @app_commands.checks.has_permissions(administrator=True)
-    async def reload_cog(self, interaction: discord.Interaction):
-        pass
-        # my_view = CogSelectView(timeout=1800)
-        # for cog_name in [extension for extension in self.bot.extensions]:
-        #     cog_button = ReloadButtons(self.bot, label=cog_name)
-        #     my_view.add_item(cog_button)
-        # await interaction.response.send_message(
-        #     f"Please select the cog you would like to reload.",
-        #     view=my_view,
-        #     ephemeral=True,
-        # )
-
     @app_commands.command(name="load", description="Loads cogs.")
     @app_commands.checks.has_permissions(administrator=True)
     async def load(self, interaction: discord.Interaction, *, cog: str):

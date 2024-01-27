@@ -39,16 +39,17 @@ class Store:
         self.conn.row_factory = namedtuple_factory
 
     def new_log(
-        self, discord_guild_id, discord_user_id, media_type, amount, note, created_at
+        self, discord_guild_id, discord_user_id, media_type, amount, time, note, created_at
     ):
         with self.conn:
             self.conn.execute(
-                "INSERT INTO logs (discord_guild_id, discord_user_id, media_type, amount, note, created_at)VALUES (?,?,?,?,?,?)",
+                "INSERT INTO logs (discord_guild_id, discord_user_id, media_type, amount, time, note, created_at)VALUES (?,?,?,?,?,?, ?)",
                 (
                     int(discord_guild_id),
                     int(discord_user_id),
                     str(media_type),
                     int(amount),
+                    int(time),
                     str(note),
                     str(created_at),
                 ),
