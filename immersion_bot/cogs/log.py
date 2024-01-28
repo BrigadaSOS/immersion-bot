@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 import discord
+from discord.app_commands import Choice
+
 import helpers
 from discord import app_commands
 from discord.ext import commands
@@ -642,80 +644,71 @@ class Log(commands.Cog):
         await interaction.edit_original_response(content=bodyMessage)
 
     @log_anime.autocomplete("nombre")
-    async def log_autocomplete(
-        self,
-        interaction: discord.Interaction,
-        current: str,
+    async def log_anime_autocomplete(
+        self, interaction: discord.Interaction, current: str
     ) -> List[app_commands.Choice[str]]:
-        print("Autocompleting")
-        media_type = interaction.namespace["media_type"]
-        suggestions = []
-        url = ""
+        return await self.autocomplete_results(interaction, current, MediaType.ANIME)
 
-        return []
-        #
-        # if media_type == "VN":
-        #     url = "https://api.vndb.org/kana/vn"
-        #     data = {
-        #         "filters": ["search", "=", f"{current}"],
-        #         "fields": "title, alttitle",
-        #     }  # default no. of results is 10
-        #
-        # elif media_type == "Anime" or media_type == "Manga":
-        #     url = "https://graphql.anilist.co"
-        #     query = f"""
-        #     query ($page: Int, $perPage: Int, $title: String) {{
-        #         Page(page: $page, perPage: $perPage) {{
-        #             pageInfo {{
-        #                 total
-        #                 perPage
-        #             }}
-        #             media (search: $title, type: {media_type.upper()}) {{
-        #                 id
-        #                 title {{
-        #                     romaji
-        #                     native
-        #                 }}
-        #             }}
-        #         }}
-        #     }}
-        #     """
-        #
-        #     variables = {"title": current, "page": 1, "perPage": 10}
-        #
-        #     data = {"query": query, "variables": variables}
-        #
-        # if not url:
-        #     return []
-        #
-        # async with aiohttp.ClientSession() as session:
-        #     async with session.post(url, json=data) as resp:
-        #         log.info(resp.status)
-        #         json_data = await resp.json()
-        #
-        #         if media_type == "VN":
-        #             suggestions = [
-        #                 (result["title"], result["id"])
-        #                 for result in json_data["results"]
-        #             ]
-        #
-        #         elif media_type == "Anime" or media_type == "Manga":
-        #             suggestions = [
-        #                 (
-        #                     f"{result['title']['romaji']} ({result['title']['native']})",
-        #                     result["id"],
-        #                 )
-        #                 for result in json_data["data"]["Page"]["media"]
-        #             ]
-        #
-        #         await asyncio.sleep(0)
-        #
-        #         return [
-        #             app_commands.Choice(name=title, value=str(id))
-        #             for title, id in suggestions
-        #             if current.lower() in title.lower()
-        #         ]
-        #
+    @log_manga.autocomplete("nombre")
+    async def log_manga_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> List[app_commands.Choice[str]]:
+        return await self.autocomplete_results(interaction, current, MediaType.MANGA)
+
+    @log_vn.autocomplete("nombre")
+    async def log_vn_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> List[app_commands.Choice[str]]:
+        return await self.autocomplete_results(interaction, current, MediaType.VN)
+
+    @log_ln.autocomplete("nombre")
+    async def log_ln_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> List[app_commands.Choice[str]]:
+        return await self.autocomplete_results(interaction, current, MediaType.LN)
+
+    @log_game.autocomplete("nombre")
+    async def log_game_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> List[app_commands.Choice[str]]:
+        return await self.autocomplete_results(interaction, current, MediaType.GAME)
+
+    @log_audiobook.autocomplete("nombre")
+    async def log_audiobook_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> List[app_commands.Choice[str]]:
+        return await self.autocomplete_results(
+            interaction, current, MediaType.AUDIOBOOK
+        )
+
+    @log_listening.autocomplete("nombre")
+    async def log_listening_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> List[app_commands.Choice[str]]:
+        return await self.autocomplete_results(
+            interaction, current, MediaType.LISTENING
+        )
+
+    @log_readtime.autocomplete("nombre")
+    async def log_readtime_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> List[app_commands.Choice[str]]:
+        return await self.autocomplete_results(interaction, current, MediaType.READTIME)
+
+    async def autocomplete_results(
+        self, interaction: discord.Interaction, current: str, media_type: MediaType
+    ) -> List[app_commands.Choice[str]]:
+        try:
+            store = Store(_DB_NAME)
+            results = store.get_latest_content_by_user_autocomplete(
+                interaction.user.id, current, media_type.value
+            )
+            print("Autocomplete results", results)
+
+            return [Choice(name=x, value=x) for x in results]
+
+        except Exception as err:
+            print("LOG AUTOCOMPLETE ERROR", err)
 
 
 async def setup(bot: commands.Bot) -> None:

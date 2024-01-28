@@ -1,3 +1,4 @@
+import ast
 import sqlite3
 from collections import namedtuple
 from enum import Enum
@@ -124,6 +125,25 @@ class Store:
             cursor.execute(query, data)
             return cursor.fetchall()
 
+    def get_latest_content_by_user_autocomplete(
+        self, discord_user_id, current, media_type
+    ):
+        query = f"""
+            SELECT note, created_at From logs
+            WHERE media_type == '{media_type}' and discord_user_id == '{discord_user_id}'
+            AND note LIKE '%{current}%'
+            GROUP BY note
+            ORDER BY created_at DESC
+            LIMIT 20
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+        content_results = [ast.literal_eval(x[0])[0] for x in rows]
+        print(content_results)
+        return content_results
+
     def get_logs_by_user(self, discord_user_id, media_type, timeframe):
         if media_type == None and timeframe == None:
             where_clause = f"discord_user_id={discord_user_id}"
@@ -153,7 +173,6 @@ class Store:
         WHERE {where_clause}
         ORDER BY created_at DESC;
         """
-        print(query)
         cursor = self.conn.cursor()
         cursor.execute(query)
         return cursor.fetchall()
