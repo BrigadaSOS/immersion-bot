@@ -69,15 +69,25 @@ def multiplied_points(logs):
 
 
 def media_type_format(media_type, plural=True):
-    match media_type:
-        case MediaType.ANIME.value:
-            return "episodio" + "s" if plural else ""
-        case MediaType.MANGA.value:
-            return "página" + "s" if plural else ""
-        case MediaType.VN.value | MediaType.LN.value:
-            return "caracter" + "s" if plural else ""
-        case MediaType.GAME.value | MediaType.AUDIOBOOK.value | MediaType.LISTENING.value | MediaType.READTIME.value:
-            return "minuto" + "s" if plural else ""
+    print("Matching:", media_type)
+    if media_type == MediaType.ANIME.value:
+        return "episodios" if plural else "episodio"
+
+    if media_type == MediaType.MANGA.value:
+        return "páginas" if plural else "página"
+
+    if media_type in [MediaType.VN.value, MediaType.LN.value]:
+        return "caracteres" if plural else "caracter"
+
+    if media_type in [
+        MediaType.GAME.value,
+        MediaType.AUDIOBOOK.value,
+        MediaType.LISTENING.value,
+        MediaType.READTIME.value,
+    ]:
+        return "minutos" if plural else "minuto"
+
+    raise Exception(f"Unknown media type: {media_type}")
 
 
 def millify(n):
@@ -277,6 +287,10 @@ def get_index_by_ranges(amount, ranges):
 def point_message_converter(media_type, amount, name):
     amount = _to_amount(media_type, amount)
     multiplier = MULTIPLIERS[media_type]
+
+    print("MESSAGE CONVERTER")
+    print(media_type, amount, name)
+    print("print", media_type_format(media_type, False))
 
     if isinstance(multiplier, Fraction):
         return (

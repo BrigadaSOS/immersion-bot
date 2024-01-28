@@ -467,7 +467,7 @@ class Log(commands.Cog):
 
         store = Store(os.environ["PROD_DB_PATH"])
         first_date = date.replace(day=1, hour=0, minute=0, second=0)
-        calc_amount, format, msg, title = helpers.point_message_converter(
+        calc_amount, format, points_msg, title = helpers.point_message_converter(
             media_type.upper(), amount, name
         )
         # returns weighed amount (i.e 1ep = 9.5 so weighed amount of 1 ANIME EP is 9.5), format (i.e chars, pages, etc), msg i.e 1/350 points/characters = x points, title is the anime/vn/manga title through anilist or vndb query
@@ -600,17 +600,46 @@ class Log(commands.Cog):
                     )
                     continue
         goals_description = "\n".join(goals_description)
+        print("GOals descriptions")
         print(goals_description)
 
-        # final log message
-        await interaction.edit_original_response(
-            content=f'''### {interaction.user.mention} ha logeado {amount} {format} de {title} en {time} minutos\n{msg}\n\n{"""__**Objetivos:**__
-""" + str(goals_description) + """
-""" if goals_description else ""}**{date.strftime("%B").title()}:** ~~{helpers.millify(sum(i for i, j in list(old_weighed_points_mediums.values())))}~~ → **{helpers.millify(sum(i for i, j in list(current_weighed_points_mediums.values())))}**\n{"""
-**Siguiente logro: **""" + new_next_rank_name + " " + new_next_rank_emoji + " en " + str(new_rank_achievement-current_achievemnt_points) + " " + helpers.media_type_format(media_type.upper()) if old_next_achievement == new_rank_achievement else """
-**Logro desbloqueado!: **""" + new_rank_name + " " + new_emoji + " " + str(int(current_rank_achievement)) + " " + helpers.media_type_format(media_type.upper()) + """
-**Siguiente logro:** """ + new_next_rank_name + " " + new_next_rank_emoji + " " + str(int(new_rank_achievement)) + " " + helpers.media_type_format(media_type.upper())}\n\n{">>> " + comment if comment else ""}'''
+        bodyMessage = ""
+
+        if backlog:
+            bodyMessage += f"### -- [Backlog] registrando para {backlog} --\n"
+
+        # <Username> ha logeado <amount> <media_type_format> de <name> en <time> minutos
+        bodyMessage += (
+            f"### {interaction.user.mention} ha logeado {amount} {format} de {title}"
         )
+        if media_type not in [
+            MediaType.LISTENING.value,
+            MediaType.READTIME.value,
+            MediaType.AUDIOBOOK.value,
+            MediaType.GAME.value,
+        ]:
+            bodyMessage += f" en {time} minutos"
+
+        # <points> puntos por <media_type_format> -> +<updated_points_amount>
+        bodyMessage += f"\n* {points_msg}\n"
+
+        if goals_description:
+            bodyMessage += f"**Objetivos:**\n{str(goals_description)}\n"
+
+        # Month: <old_point_amount> -> <new_point_amount>
+        bodyMessage += f'* **{date.strftime("%B").title()}: ** ~~{ helpers.millify(sum(i for i, j in list(old_weighed_points_mediums.values())))} ~~ → ** {helpers.millify(sum(i for i, j in list(current_weighed_points_mediums.values())))} **\n'
+
+        if old_next_achievement == new_rank_achievement:
+            bodyMessage += f"\n**Siguiente logro:** {new_next_rank_name} {new_next_rank_emoji} en {str(new_rank_achievement-current_achievemnt_points)} {helpers.media_type_format(media_type.upper())}\n"
+        else:
+            bodyMessage += f"\n**¡Logro desbloqueado!** {new_rank_name} {new_emoji} - {str(int(current_rank_achievement))} {helpers.media_type_format(media_type.upper())}\n"
+            bodyMessage += f"**Siguiente logro:** {new_next_rank_name} {new_next_rank_emoji} - {str(int(new_rank_achievement))} {helpers.media_type_format(media_type.upper())}\n"
+
+        if comment:
+            bodyMessage += f">>> {comment}"
+
+        # final log message
+        await interaction.edit_original_response(content=bodyMessage)
 
     @log_anime.autocomplete("nombre")
     async def log_autocomplete(
