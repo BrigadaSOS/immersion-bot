@@ -1,11 +1,11 @@
 import itertools
 import math
+from fractions import Fraction
+
 import dateparser
 import random
-import sqlite3
 from collections import defaultdict
 from datetime import datetime, timedelta
-from enum import Enum
 
 from AnilistPython import Anilist
 from discord.app_commands import Choice
@@ -14,38 +14,45 @@ from vndb_thigh_highs.models import VN
 
 from sql import MediaType
 
-
-class SqliteEnum(Enum):
-    def __conform__(self, protocol):
-        if protocol is sqlite3.PrepareProtocol:
-            return self.name
+# USE THIS ONE
+MULTIPLIERS = {
+    MediaType.ANIME.value: 9.5,
+    MediaType.MANGA.value: 0.2,
+    MediaType.VN.value: Fraction(1, 350),
+    MediaType.LN.value: Fraction(1, 350),
+    MediaType.GAME.value: 0.30,
+    MediaType.AUDIOBOOK.value: 0.45,
+    MediaType.LISTENING.value: 0.45,
+    MediaType.READTIME.value: 0.45,
+}
 
 
 def _to_amount(media_type, amount):
-    if media_type == MediaType.ANIME.value:
-        return amount * 9.5
-    elif media_type == MediaType.MANGA.value:
-        return amount * 0.2
-    elif media_type == MediaType.VN.value:
-        return amount / 350.0
-    elif media_type == MediaType.LN.value:
-        return amount / 350.0
-    elif media_type == MediaType.LISTENING.value:
-        return amount * 0.45
-    elif media_type == MediaType.READTIME.value:
-        return amount * 0.45
-    else:
+    if media_type not in MULTIPLIERS:
         raise Exception(f"Unknown media type: {media_type}")
+
+    return float(amount * MULTIPLIERS[media_type])
+
+
+def to_sql_calculation_query():
+    query = ""
+    for media_type, multplier in MULTIPLIERS.items():
+        query += f"WHEN media_type = '{media_type}' THEN amount * {MULTIPLIERS[media_type]}\n"
+
+    print("Debugging multiplier query on SQL calculations")
+    return query
 
 
 def get_logeable_media_type_choices():
     return [
         Choice(name="Anime", value=MediaType.ANIME.value),
         Choice(name="Manga", value=MediaType.MANGA.value),
-        Choice(name="Visual Novels", value=MediaType.VN.value),
-        Choice(name="Light Novels", value=MediaType.LN.value),
-        Choice(name="Readtime", value=MediaType.READTIME.value),
+        Choice(name="VN", value=MediaType.VN.value),
+        Choice(name="LN", value=MediaType.LN.value),
+        Choice(name="Videojuego", value=MediaType.GAME.value),
+        Choice(name="Audiolibro", value=MediaType.AUDIOBOOK.value),
         Choice(name="Listening", value=MediaType.LISTENING.value),
+        Choice(name="Readtime", value=MediaType.READTIME.value),
     ]
 
 
@@ -61,21 +68,16 @@ def multiplied_points(logs):
     )
 
 
-def media_type_format(media_type):
-    if media_type == MediaType.ANIME.value:
-        return "episodios"
-    elif media_type == MediaType.MANGA.value:
-        return "páginas"
-    elif media_type == MediaType.VN.value:
-        return "caracteres"
-    elif media_type == MediaType.LN.value:
-        return "caracteres"
-    elif media_type == MediaType.LISTENING.value:
-        return "minutos"
-    elif media_type == MediaType.READTIME.value:
-        return "minutos"
-    else:
-        raise Exception(f"Unknown media type: {media_type}")
+def media_type_format(media_type, plural=True):
+    match media_type:
+        case MediaType.ANIME.value:
+            return "episodio" + "s" if plural else ""
+        case MediaType.MANGA.value:
+            return "página" + "s" if plural else ""
+        case MediaType.VN.value | MediaType.LN.value:
+            return "caracter" + "s" if plural else ""
+        case MediaType.GAME.value | MediaType.AUDIOBOOK.value | MediaType.LISTENING.value | MediaType.READTIME.value:
+            return "minuto" + "s" if plural else ""
 
 
 def millify(n):
@@ -129,9 +131,19 @@ def pairwise(iterable):
 
 
 ACHIEVEMENTS = {
-    "ANIME": [1, 12, 25, 100, 200, 500, 800, 1500, float("inf")],
-    "MANGA": [1, 250, 1250, 5000, 10_000, 25_000, 50_000, 100_000, float("inf")],
-    "VN": [
+    MediaType.ANIME.value: [1, 12, 25, 100, 200, 500, 800, 1500, float("inf")],
+    MediaType.MANGA.value: [
+        1,
+        250,
+        1250,
+        5000,
+        10_000,
+        25_000,
+        50_000,
+        100_000,
+        float("inf"),
+    ],
+    MediaType.VN.value: [
         1,
         50_000,
         100_000,
@@ -142,7 +154,7 @@ ACHIEVEMENTS = {
         10_000_000,
         float("inf"),
     ],
-    "LN": [
+    MediaType.LN.value: [
         1,
         50_000,
         100_000,
@@ -153,8 +165,50 @@ ACHIEVEMENTS = {
         10_000_000,
         float("inf"),
     ],
-    "LISTENING": [1, 250, 500, 2000, 5000, 10_000, 25_000, 50_000, float("inf")],
-    "READTIME": [1, 250, 500, 2000, 5000, 10_000, 25_000, 50_000, float("inf")],
+    MediaType.GAME.value: [
+        1,
+        250,
+        500,
+        2000,
+        5000,
+        10_000,
+        25_000,
+        50_000,
+        float("inf"),
+    ],
+    MediaType.AUDIOBOOK.value: [
+        1,
+        250,
+        500,
+        2000,
+        5000,
+        10_000,
+        25_000,
+        50_000,
+        float("inf"),
+    ],
+    MediaType.LISTENING.value: [
+        1,
+        250,
+        500,
+        2000,
+        5000,
+        10_000,
+        25_000,
+        50_000,
+        float("inf"),
+    ],
+    MediaType.READTIME.value: [
+        1,
+        250,
+        500,
+        2000,
+        5000,
+        10_000,
+        25_000,
+        50_000,
+        float("inf"),
+    ],
 }
 
 PT_ACHIEVEMENTS = [1, 100, 300, 1000, 2000, 10_000, 25_000, 100_000, float("inf")]
@@ -169,6 +223,7 @@ ACHIEVEMENT_RANKS = [
     "Sabio",
     "Maestro",
 ]
+
 ACHIEVEMENT_EMOJIS = [
     ":new_moon:",
     ":new_moon_with_face:",
@@ -220,167 +275,23 @@ def get_index_by_ranges(amount, ranges):
 
 
 def point_message_converter(media_type, amount, name):
-    # --------- ANIME
-    if media_type == MediaType.ANIME.value:
-        amount = amount * 9.5
-        if name and name.isdigit():
-            anilist = Anilist()
-            name_key = f"name_{'english' if anilist.get_anime_with_id(name)['name_english'] else 'romaji'}"
-            updated_title = anilist.get_anime_with_id(name)[name_key].replace(" ", "-")
-            return (
-                amount,
-                "episodios",
-                f"9.5 puntos por episodio → **+{round(amount, 2)} puntos**",
-                (
-                    "de "
-                    + "["
-                    + anilist.get_anime_with_id(name)[name_key]
-                    + "]"
-                    + "("
-                    + f"<https://anilist.co/anime/{name}/{updated_title}/>"
-                    + ")"
-                    if name
-                    else ""
-                ),
-            )
-        if name:
-            return (
-                amount,
-                "episodios",
-                f"9.5 puntos por episodio → **+{round(amount, 2)} puntos**",
-                name,
-            )
+    amount = _to_amount(media_type, amount)
+    multiplier = MULTIPLIERS[media_type]
+
+    if isinstance(multiplier, Fraction):
         return (
             amount,
-            "episodios",
-            f"9.5 puntos por episodio → **+{round(amount, 2)} puntos**",
-            f"de {media_type}",
+            media_type_format(media_type),
+            f"{multiplier} puntos/{media_type_format(media_type, False)} → **+{round(amount, 2)} puntos**",
+            name,
         )
 
-    # --------- MANGA
-    if media_type == MediaType.MANGA.value:
-        amount = amount * 0.2
-        if name and name.isdigit():
-            anilist = Anilist()
-            name_key = f"name_{'english' if anilist.get_manga_with_id(name)['name_english'] else 'romaji'}"
-            updated_title = anilist.get_manga_with_id(name)[name_key].replace(" ", "-")
-            return (
-                amount,
-                "pgs",
-                f"0.2 puntos por página → **+{round(amount, 2)} puntos**",
-                (
-                    "of "
-                    + "["
-                    + anilist.get_manga_with_id(name)[name_key]
-                    + "]"
-                    + "("
-                    + f"<https://anilist.co/manga/{name}/{updated_title}/>"
-                    + ")"
-                    if name
-                    else ""
-                ),
-            )
-        if name:
-            return (
-                amount,
-                "páginas",
-                f"0.2 puntos por página → **+{round(amount, 2)} puntos**",
-                name,
-            )
-        return (
-            amount,
-            "páginas",
-            f"0.2 puntos por página → **+{round(amount, 2)} puntos**",
-            f"de {media_type}",
-        )
-
-    # --------- VN
-    if media_type == MediaType.VN.value:
-        amount = amount / 350
-        if name and name.startswith("v"):
-            vndb = VNDB()
-            vns = vndb.get_vn(VN.id == name[1:])
-            vn = vns[0]
-            return (
-                amount,
-                "caracteres",
-                f"1/350 puntos/caracteres → **+{round(amount, 2)} puntos**",
-                (
-                    "en "
-                    + "["
-                    + vn.title
-                    + "]"
-                    + "("
-                    + f"<https://vndb.org/{name}>"
-                    + ")"
-                    if name
-                    else ""
-                ),
-            )
-        if name:
-            return (
-                amount,
-                "caracteres",
-                f"1/350 puntos/caracteres → **+{round(amount, 2)} puntos**",
-                name,
-            )
-        return (
-            amount,
-            "caracteres",
-            f"1/350 puntos/caracteres → **+{round(amount, 2)} puntos**",
-            f"en {media_type}",
-        )
-
-    # --------- LN
-    if media_type == MediaType.LN.value:
-        amount = amount / 350
-        if name:
-            return (
-                amount,
-                "caracteres",
-                f"1/135 puntos/caracteres → **+{round(amount, 2)} puntos**",
-                name,
-            )
-        return (
-            amount,
-            "caracteres",
-            f"1/135 puntos/caracteres → **+{round(amount, 2)} puntos**",
-            f"de {media_type}",
-        )
-
-    # --------- READTIME
-    if media_type == MediaType.READTIME.value:
-        amount = amount * 0.45
-        if name:
-            return (
-                amount,
-                "minutos",
-                f"0.45 puntos/minutos de lectura → **+{round(amount, 2)} puntos**",
-                name,
-            )
-        return (
-            amount,
-            "minutos",
-            f"0.45 puntos/minutos de lectura → **+{round(amount, 2)} puntos**",
-            f"de {media_type}",
-        )
-
-    # --------- LISTENING
-    if media_type == MediaType.LISTENING.value:
-        amount = amount * 0.45
-        if name:
-            return (
-                amount,
-                "minutos",
-                f"0.45 puntos/minuto de listening → **+{round(amount, 2)} puntos**",
-                name,
-            )
-        return (
-            amount,
-            "minutos",
-            f"0.45 puntos/minuto de listening → **+{round(amount, 2)} puntos**",
-            f"en {media_type}",
-        )
+    return (
+        amount,
+        media_type_format(media_type),
+        f"{multiplier} puntos por {media_type_format(media_type, False)} → **+{round(amount, 2)} puntos**",
+        name,
+    )
 
 
 def start_end_tf(now, timeframe):

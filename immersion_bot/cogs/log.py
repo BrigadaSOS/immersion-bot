@@ -1,10 +1,8 @@
-import asyncio
 import logging
 import os
 from datetime import datetime, timedelta
 from typing import List, Optional
 
-import aiohttp
 import discord
 import helpers
 from discord import app_commands
@@ -222,16 +220,20 @@ class Log(commands.Cog):
             backlog,
         )
 
-    @log_group.command(name="readtime", description="Registra minutos de lectura")
-    @app_commands.describe(
-        tiempo="""Tiempo estimado que ha estado escuchando contenido. Formatos aceptados: 01:20, 20, 20min, 1h"""
+    @log_group.command(
+        name="game", description="Registra minutos jugados a un videojuego"
     )
-    @app_commands.describe(nombre="""Nombre del libro""")
+    @app_commands.describe(
+        tiempo="""Tiempo estimado que ha estado jugando. Formatos aceptados: 01:20, 20, 20min, 1h"""
+    )
+    @app_commands.describe(
+        nombre="""Nombre del videojuego. Para VNs o juegos centrados en texto use /log vn"""
+    )
     @app_commands.describe(comentario="""Comentario extra a registrar""")
     @app_commands.describe(
         backlog="""Registra en un día anterior. Formato aceptado: [yyyy-mm-dd]. Ejemplo: 2024-02-01"""
     )
-    async def log_readtime(
+    async def log_game(
         self,
         interaction: discord.Interaction,
         tiempo: str,
@@ -253,7 +255,46 @@ class Log(commands.Cog):
 
         return await self.log(
             interaction,
-            MediaType.READTIME.value,
+            MediaType.GAME.value,
+            time_spent_min,
+            time_spent_min,
+            nombre,
+            comentario,
+            backlog,
+        )
+
+    @log_group.command(name="audiobook", description="Registra minutos de Audiolibro")
+    @app_commands.describe(
+        tiempo="""Tiempo estimado que ha estado escuchando el audiolibro. Formatos aceptados: 01:20, 20, 20min, 1h"""
+    )
+    @app_commands.describe(nombre="""Nombre del audiolibro""")
+    @app_commands.describe(comentario="""Comentario extra a registrar""")
+    @app_commands.describe(
+        backlog="""Registra en un día anterior. Formato aceptado: [yyyy-mm-dd]. Ejemplo: 2024-02-01"""
+    )
+    async def log_audiobook(
+        self,
+        interaction: discord.Interaction,
+        tiempo: str,
+        nombre: str,
+        comentario: Optional[str],
+        backlog: Optional[str],
+    ):
+        await interaction.response.defer()
+
+        time_spent_min = helpers.elapsed_time_to_mins(tiempo)
+        if time_spent_min > 480:
+            return await interaction.edit_original_response(
+                content="No se pueden registrar más de 480 minutos de una vez."
+            )
+        if time_spent_min < 0:
+            return await interaction.edit_original_response(
+                content="Solo se permiten números positivos."
+            )
+
+        return await self.log(
+            interaction,
+            MediaType.AUDIOBOOK.value,
             time_spent_min,
             time_spent_min,
             nombre,
@@ -293,6 +334,45 @@ class Log(commands.Cog):
         return await self.log(
             interaction,
             MediaType.LISTENING.value,
+            time_spent_min,
+            time_spent_min,
+            nombre,
+            comentario,
+            backlog,
+        )
+
+    @log_group.command(name="readtime", description="Registra minutos de lectura")
+    @app_commands.describe(
+        tiempo="""Tiempo estimado que ha estado escuchando contenido. Formatos aceptados: 01:20, 20, 20min, 1h"""
+    )
+    @app_commands.describe(nombre="""Nombre del libro""")
+    @app_commands.describe(comentario="""Comentario extra a registrar""")
+    @app_commands.describe(
+        backlog="""Registra en un día anterior. Formato aceptado: [yyyy-mm-dd]. Ejemplo: 2024-02-01"""
+    )
+    async def log_readtime(
+        self,
+        interaction: discord.Interaction,
+        tiempo: str,
+        nombre: str,
+        comentario: Optional[str],
+        backlog: Optional[str],
+    ):
+        await interaction.response.defer()
+
+        time_spent_min = helpers.elapsed_time_to_mins(tiempo)
+        if time_spent_min > 480:
+            return await interaction.edit_original_response(
+                content="No se pueden registrar más de 480 minutos de una vez."
+            )
+        if time_spent_min < 0:
+            return await interaction.edit_original_response(
+                content="Solo se permiten números positivos."
+            )
+
+        return await self.log(
+            interaction,
+            MediaType.READTIME.value,
             time_spent_min,
             time_spent_min,
             nombre,

@@ -2,6 +2,8 @@ import sqlite3
 from collections import namedtuple
 from enum import Enum
 
+import helpers
+
 
 class SqliteEnum(Enum):
     def __conform__(self, protocol):
@@ -11,13 +13,15 @@ class SqliteEnum(Enum):
 
 class MediaType(SqliteEnum):
     # As it is
-    ANIME = "ANIME"  # Done
-    MANGA = "MANGA"  # Done
-    VN = "VN"  # Done
+    ANIME = "ANIME"
+    MANGA = "MANGA"
+    VN = "VN"
     LN = "LN"
-    LISTENING = "LISTENING"  # Done
+    GAME = "GAME"
+    AUDIOBOOK = "AUDIOBOOK"
+    LISTENING = "LISTENING"
     READTIME = "READTIME"
-    ANYTHING = "ANYTHING"  # ANYTHING as an option for setting a point goal
+    ANYTHING = "ANYTHING"
 
 
 def namedtuple_factory(cursor, row):
@@ -92,12 +96,7 @@ class Store:
                     discord_user_id,
                     SUM(
                     CASE
-                        WHEN media_type = 'ANIME' THEN amount * 9.5
-                        WHEN media_type = 'MANGA' THEN amount * 0.2
-                        WHEN media_type = 'VN' THEN amount * (1.0 / 350.0)
-                        WHEN media_type = 'LN' THEN amount * (1.0 / 350.0)
-                        WHEN media_type = 'READTIME' THEN amount * 0.45
-                        WHEN media_type = 'LISTENING' THEN amount * 0.45
+                        {helpers.to_sql_calculation_query()}
                         ELSE 0
                     END
                     ) AS total

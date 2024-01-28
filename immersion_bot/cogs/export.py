@@ -17,18 +17,8 @@ from sql import Store, MediaType
 load_dotenv()
 
 _DB_NAME = os.environ["PROD_DB_PATH"]
-
-guildid = int(os.environ["GUILD_ID"])
-channelid = int(os.environ["CHANNEL_ID"])
-
-MULTIPLIERS = {
-    "ANIME": 9.5,
-    "MANGA": 0.2,
-    "VN": 1 / 350,
-    "LN": 1 / 350,
-    "LISTENING": 0.45,
-    "READTIME": 0.45,
-}
+GUILD_ID = int(os.environ["GUILD_ID"])
+CHANNEL_ID = int(os.environ["CHANNEL_ID"])
 
 #############################################################
 
@@ -39,7 +29,7 @@ class Export(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.myguild = self.bot.get_guild(guildid)
+        self.myguild = self.bot.get_guild(GUILD_ID)
 
     @app_commands.command(name="export", description=f"Export your immersion logs.")
     @app_commands.describe(timeframe="""Span of logs used.""")
@@ -62,7 +52,7 @@ class Export(commands.Cog):
         media_type: Optional[str],
         date: Optional[str],
     ):
-        if interaction.channel.id != channelid:
+        if interaction.channel.id != CHANNEL_ID:
             return await interaction.response.send_message(
                 ephemeral=True,
                 content="Solo puedes logear en el canal #registro-inmersión.",

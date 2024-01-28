@@ -25,15 +25,6 @@ _DB_NAME = os.environ["PROD_DB_PATH"]
 GUILD_ID = int(os.environ["GUILD_ID"])
 CHANNEL_ID = int(os.environ["CHANNEL_ID"])
 
-MULTIPLIERS = {
-    "ANIME": 9.5,
-    "MANGA": 0.2,
-    "VN": 1 / 350,
-    "LN": 1 / 350,
-    "LISTENING": 0.45,
-    "READTIME": 0.45,
-}
-
 #############################################################
 
 
@@ -134,12 +125,14 @@ class User(commands.Cog):
         # print(df)
 
         color_dict = {
-            "ANIME": "tab:purple",
-            "MANGA": "tab:red",
-            "VN": "tab:cyan",
-            "LN": "tab:green",
-            "READTIME": "tab:pink",
-            "LISTENING": "tab:blue",
+            MediaType.ANIME.value: "tab:purple",
+            MediaType.MANGA.value: "tab:red",
+            MediaType.VN.value: "tab:cyan",
+            MediaType.LN.value: "tab:green",
+            MediaType.GAME.value: "tab:green",  # Change
+            MediaType.AUDIOBOOK.value: "tab:green",  # Change
+            MediaType.READTIME.value: "tab:pink",
+            MediaType.LISTENING.value: "tab:blue",
         }
 
         accumulator = 0
