@@ -144,6 +144,24 @@ class Store:
         print(content_results)
         return content_results
 
+    def delete_last_log_user(self, discord_user_id, limit):
+        query = f"""
+             DELETE FROM logs
+                    WHERE ROWID IN (SELECT ROWID
+                                    FROM logs WHERE discord_user_id == '{discord_user_id}'
+                                    ORDER BY created_at DESC
+                                    LIMIT {limit})
+                    RETURNING *
+        """
+
+        print(query)
+
+        cursor = self.conn.cursor()
+        cursor.execute(query)
+        deleted_rows = cursor.fetchall()
+        self.conn.commit()
+        return deleted_rows
+
     def get_logs_by_user(self, discord_user_id, media_type, timeframe):
         if media_type == None and timeframe == None:
             where_clause = f"discord_user_id={discord_user_id}"

@@ -1,10 +1,14 @@
+import ast
 import os
+from typing import Optional
 
 import discord
 from discord import app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
 
+import helpers
+from sql import Store
 
 #############################################################
 
@@ -26,14 +30,35 @@ class Undo(commands.Cog):
         self.guild = self.bot.get_guild(GUILD_ID)
 
     @app_commands.command(name="undo", description="Deshacer el último log creado.")
-    async def undo(
-        self,
-        interaction: discord.Interaction,
-    ):
+    @app_commands.describe(
+        cantidad="Número registros a borrar de una vez (Máximo 5). CUALQUIER DATO ELIMINADO NO SE PUEDE RECUPERAR, ÚSELO CON PRECAUCIÓN."
+    )
+    async def undo(self, interaction: discord.Interaction, cantidad: Optional[int]):
         await interaction.response.defer()
-        return await interaction.edit_original_response(
-            content="Este comando aún no está implementado."
+
+        records_to_delete = cantidad if cantidad else 1
+        if records_to_delete > 5:
+            return await interaction.edit_original_response(
+                content="Por precaución no se pueden deshacer más de 5 registros de una vez."
+            )
+
+        store = Store(_DB_NAME)
+        deleted_rows = store.delete_last_log_user(
+            interaction.user.id, records_to_delete
         )
+        print(deleted_rows)
+
+        if len(deleted_rows) > 0:
+            bodyMessage = "### Se han eliminado los siguientes registros:\n"
+            for row in deleted_rows:
+                note = ast.literal_eval(row.note)
+                bodyMessage += f"* **[{row.created_at.strftime('%Y-%m-%d')}]** {row.media_type.value} {note[0]} - {round(row.amount, 2)} {helpers.media_type_format(row.media_type.value, (row.amount > 1))} - {row.time} minutos - {helpers._to_amount(row.media_type.value, row.amount)} puntos\n"
+                if note[1]:
+                    bodyMessage += f"\t* {note[1]}"
+        else:
+            bodyMessage = "No se ha encontrado ningún registro a eliminar."
+
+        return await interaction.edit_original_response(content=bodyMessage)
 
 
 #         message_link = message_link.split('/')
