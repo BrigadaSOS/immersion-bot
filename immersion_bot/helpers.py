@@ -69,7 +69,6 @@ def multiplied_points(logs):
 
 
 def media_type_format(media_type, plural=True):
-    print("Matching:", media_type)
     if media_type == MediaType.ANIME.value:
         return "episodios" if plural else "episodio"
 

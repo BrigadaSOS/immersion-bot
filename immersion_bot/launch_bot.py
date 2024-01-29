@@ -70,7 +70,6 @@ class MyBot(commands.Bot):
         self.bot_owner_dm_channel = bot_owner.dm_channel
 
         await self.change_presence(activity=discord.Game(presence_message))
-
         print(f"Logged in as\n\tName: {self.user.name}\n\tID: {self.user.id}")
         print(f"Running pycord version: {discord.__version__}")
         print(f"Guild ID: ${GUILD_ID}. Chanel ID: ${CHANNEL_ID}")

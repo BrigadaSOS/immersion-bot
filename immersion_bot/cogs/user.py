@@ -129,10 +129,11 @@ class User(commands.Cog):
             MediaType.MANGA.value: "tab:red",
             MediaType.VN.value: "tab:cyan",
             MediaType.LN.value: "tab:green",
-            MediaType.GAME.value: "tab:green",  # Change
-            MediaType.AUDIOBOOK.value: "tab:green",  # Change
+            MediaType.GAME.value: "tab:orange",
+            MediaType.AUDIOBOOK.value: "tab:brown",
             MediaType.READTIME.value: "tab:pink",
             MediaType.LISTENING.value: "tab:blue",
+            MediaType.ANYTHING.value: "tab:orange",
         }
 
         accumulator = 0
@@ -158,7 +159,7 @@ class User(commands.Cog):
             ),
         )
         amounts_by_media_desc = "\n".join(
-            f"* **{key}**: {helpers.millify(weighed_points_mediums[key][1])} {helpers.media_type_format(key)} → {helpers.millify(weighed_points_mediums[key][0])} puntos"
+            f"* **{key}**: {helpers.millify(weighed_points_mediums[key][1])} {helpers.media_type_format(key)} → {helpers.millify(round(weighed_points_mediums[key][0], 2))} puntos"
             for key in weighed_points_mediums
         )
         embed.add_field(

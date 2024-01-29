@@ -162,6 +162,24 @@ class Store:
         self.conn.commit()
         return deleted_rows
 
+    def get_all_logs_by_user(self, discord_user_id, media_type):
+        print(f"user: {discord_user_id} media_type: {media_type}")
+
+        where_clause = f"discord_user_id = '{discord_user_id}'"
+        if media_type:
+            where_clause += f" AND media_type = '{media_type}'"
+
+        query = f"""
+        SELECT * FROM logs
+        WHERE {where_clause}
+        ORDER BY created_at DESC;
+        """
+        print(query)
+
+        cursor = self.conn.cursor()
+        cursor.execute(query)
+        return cursor.fetchall()
+
     def get_logs_by_user(self, discord_user_id, media_type, timeframe):
         if media_type == None and timeframe == None:
             where_clause = f"discord_user_id={discord_user_id}"
