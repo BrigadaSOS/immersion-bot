@@ -128,12 +128,12 @@ class User(commands.Cog):
         embed.add_field(
             name="**Puntos**",
             value=helpers.millify(
-                sum(i for i, j, _ in list(weighed_points_mediums.values()))
+                sum(i for i, _, _ in list(weighed_points_mediums.values()))
             ),
         )
         embed.add_field(
             name="**Tiempo**",
-            value=f"{round(sum(k for i, j, k in list(weighed_points_mediums.values())) / 60, 2)} horas",
+            value=f"{round(sum(k for _, _, k in list(weighed_points_mediums.values())) / 60, 2)} horas",
         )
         amounts_by_media_desc = "\n".join(
             f"* **{key}**: {helpers.millify(weighed_points_mediums[key][1])} {helpers.media_type_format(key)} → {helpers.millify(round(weighed_points_mediums[key][0], 2))} puntos{' | ' + str(round(weighed_points_mediums[key][2] / 60, 2)) + ' horas' if key not in [MediaType.READTIME.value, MediaType.AUDIOBOOK.value, MediaType.LISTENING.value, MediaType.GAME.value] else ''}"
@@ -206,7 +206,7 @@ class User(commands.Cog):
                 content="No se ha encontrado ningún log."
             )
 
-        weighed_points_mediums = helpers.multiplied_points(logs)
+        weighed_points_mediums = helpers.multiplied_points_with_time(logs)
         print("Weighted Points Medium")
         print(weighed_points_mediums)
         embed, file = await self.create_embed(

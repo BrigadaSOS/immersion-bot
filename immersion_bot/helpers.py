@@ -67,6 +67,18 @@ def get_logeable_media_type_choices():
 
 def multiplied_points(logs):
     dictes = defaultdict(list)
+    for row in logs:
+        dictes[row.media_type.value].append(row.amount)
+    return dict(
+        [
+            (key, (_to_amount(key, sum(values)), sum(values)))
+            for key, values in dictes.items()
+        ]
+    )
+
+
+def multiplied_points_with_time(logs):
+    dictes = defaultdict(list)
     time_dictes = defaultdict(list)
     for row in logs:
         dictes[row.media_type.value].append(row.amount)
