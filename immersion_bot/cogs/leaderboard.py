@@ -72,10 +72,7 @@ class Leaderboard(commands.Cog):
                 microsecond=0,
             )
 
-        print(periodo)
-        print(medio)
         now, start, end, title = helpers.start_end_tf(now, periodo)
-        print(title)
         store = Store(_DB_NAME)
         leaderboard = store.get_leaderboard(
             interaction.user.id, (now, start, end), medio
@@ -102,12 +99,9 @@ class Leaderboard(commands.Cog):
         leaderboard_desc = "\n".join(
             [await leaderboard_row(*row) for row in leaderboard]
         )
-        print(medio)
         if medio:
             title += f" de {medio}"
 
-        print("Title")
-        print(title)
         embed = discord.Embed(title=title, description=leaderboard_desc)
 
         await interaction.edit_original_response(embed=embed)

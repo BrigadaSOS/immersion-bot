@@ -181,6 +181,7 @@ class Store:
         return cursor.fetchall()
 
     def get_logs_by_user(self, discord_user_id, media_type, timeframe):
+        print(f"Get logs for {discord_user_id} - {media_type} -{timeframe} ")
         if media_type == None and timeframe == None:
             where_clause = f"discord_user_id={discord_user_id}"
         if media_type and media_type != None and timeframe:

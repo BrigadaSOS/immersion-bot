@@ -67,11 +67,13 @@ def get_logeable_media_type_choices():
 
 def multiplied_points(logs):
     dictes = defaultdict(list)
+    time_dictes = defaultdict(list)
     for row in logs:
         dictes[row.media_type.value].append(row.amount)
+        time_dictes[row.media_type.value].append(row.time)
     return dict(
         [
-            (key, (_to_amount(key, sum(values)), sum(values)))
+            (key, (_to_amount(key, sum(values)), sum(values), sum(time_dictes[key])))
             for key, values in dictes.items()
         ]
     )
@@ -335,7 +337,7 @@ def start_end_tf(now, timeframe):
 
     if timeframe == Period.AllTime.value:
         start = datetime(
-            year=2021, month=3, day=4, hour=0, minute=0, second=0, microsecond=0
+            year=2023, month=1, day=1, hour=0, minute=0, second=0, microsecond=0
         )
         end = now
         title = f"""Ranking global hasta {now.strftime("%B").title()} {now.year}"""
