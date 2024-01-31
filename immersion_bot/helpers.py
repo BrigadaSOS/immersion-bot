@@ -1,5 +1,6 @@
 import itertools
 import math
+from enum import Enum
 from fractions import Fraction
 
 import dateparser
@@ -13,6 +14,14 @@ from vndb_thigh_highs import VNDB
 from vndb_thigh_highs.models import VN
 
 from sql import MediaType
+
+
+class Period(Enum):
+    Monthly = "Mes"
+    Yearly = "Año"
+    Weekly = "Semana"
+    AllTime = "Todo"
+
 
 # USE THIS ONE
 MULTIPLIERS = {
@@ -308,7 +317,7 @@ def point_message_converter(media_type, amount, name):
 
 
 def start_end_tf(now, timeframe):
-    if timeframe == "Weekly":
+    if timeframe == Period.Weekly.value:
         start = (now - timedelta(days=now.weekday())).replace(
             hour=0, minute=0, second=0, microsecond=0
         )
@@ -317,21 +326,21 @@ def start_end_tf(now, timeframe):
         )
         title = f"""Ranking Semanal de {now.year}"""
 
-    if timeframe == "Monthly":
+    if timeframe == Period.Monthly.value:
         start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         end = (now.replace(day=28) + timedelta(days=4)) - timedelta(
             days=(now.replace(day=28) + timedelta(days=4)).day
         )
         title = f"""Ranking Mensual ({now.strftime("%B").title()} {now.year})"""
 
-    if timeframe == "All Time":
+    if timeframe == Period.AllTime.value:
         start = datetime(
             year=2021, month=3, day=4, hour=0, minute=0, second=0, microsecond=0
         )
         end = now
         title = f"""Ranking global hasta {now.strftime("%B").title()} {now.year}"""
 
-    if timeframe == "Yearly":
+    if timeframe == Period.Yearly.value:
         start = now.date().replace(month=1, day=1)
         end = now.date().replace(month=12, day=31)
         title = f"Ranking de {now.year}"

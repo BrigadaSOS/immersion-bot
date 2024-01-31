@@ -3,7 +3,9 @@ from datetime import datetime
 from typing import Optional
 
 import discord
+
 import helpers
+from helpers import Period
 from discord import app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
@@ -30,26 +32,24 @@ class Leaderboard(commands.Cog):
     async def on_ready(self):
         self.myguild = self.bot.get_guild(guildid)
 
-    @app_commands.command(name="leaderboard", description=f"Leaderboard of immersion.")
-    @app_commands.describe(timeframe="""Span of logs used.""")
+    @app_commands.command(name="leaderboard", description=f"Ranking de inmersión.")
+    @app_commands.describe(periodo="""Período de tiempo""")
     @app_commands.choices(
-        timeframe=[
-            Choice(name="Monthly", value="Monthly"),
-            Choice(name="All Time", value="All Time"),
-            Choice(name="Weekly", value="Weekly"),
-            Choice(name="Yearly", value="Yearly"),
+        periodo=[
+            Choice(name=x.value, value=x.value)
+            for x in [Period.Monthly, Period.AllTime, Period.Weekly, Period.Yearly]
         ]
     )
-    @app_commands.choices(media_type=helpers.get_logeable_media_type_choices())
+    @app_commands.choices(medio=helpers.get_logeable_media_type_choices())
     @app_commands.describe(
-        date="""See past leaderboards, combine it wit timeframes: [year-month-day] Example: '2022-12-29'."""
+        fecha="""Consulte rankings anteriores, combinándolo con el periodo: [año-mes-día] Ejemplo: '2022-12-29'."""
     )
     async def leaderboard(
         self,
         interaction: discord.Interaction,
-        timeframe: str,
-        media_type: Optional[str],
-        date: Optional[str],
+        periodo: str,
+        medio: Optional[str],
+        fecha: Optional[str],
     ):
         if interaction.channel.id != channelid:
             return await interaction.response.send_message(
@@ -59,23 +59,26 @@ class Leaderboard(commands.Cog):
 
         await interaction.response.defer()
 
-        if not date:
+        if not fecha:
             now = datetime.now()
         else:
             now = datetime.now().replace(
-                year=int(date.split("-")[0]),
-                month=int(date.split("-")[1]),
-                day=int(date.split("-")[2]),
+                year=int(fecha.split("-")[0]),
+                month=int(fecha.split("-")[1]),
+                day=int(fecha.split("-")[2]),
                 hour=0,
                 minute=0,
                 second=0,
                 microsecond=0,
             )
 
-        now, start, end, title = helpers.start_end_tf(now, timeframe)
+        print(periodo)
+        print(medio)
+        now, start, end, title = helpers.start_end_tf(now, periodo)
+        print(title)
         store = Store(_DB_NAME)
         leaderboard = store.get_leaderboard(
-            interaction.user.id, (now, start, end), media_type
+            interaction.user.id, (now, start, end), medio
         )
         user_rank = [
             rank for uid, total, rank in leaderboard if uid == interaction.user.id
@@ -88,26 +91,23 @@ class Leaderboard(commands.Cog):
             )
             try:
                 user = await self.bot.fetch_user(user_id)
-                display_name = user.display_name if user else "Unknown"
-                amount = (
-                    helpers._to_amount(media_type, points) if media_type else points
-                )
+                display_name = user.display_name if user else "?????"
+                amount = helpers._to_amount(medio, points) if medio else points
             except Exception:
-                display_name = "Unknown"
-            return f"{ellipsis}**{helpers.make_ordinal(rank)} {display_name}**: {helpers.millify(amount)}"
+                display_name = "Desconocido"
+            return (
+                f"{ellipsis}* **{rank}º - {display_name}**: {helpers.millify(amount)}"
+            )
 
         leaderboard_desc = "\n".join(
             [await leaderboard_row(*row) for row in leaderboard]
         )
-        title = (
-            title
-            + (" for " + media_type if media_type else "")
-            + " ("
-            + helpers.media_type_format(media_type)
-            + ")"
-            if media_type
-            else ""
-        )
+        print(medio)
+        if medio:
+            title += f" de {medio}"
+
+        print("Title")
+        print(title)
         embed = discord.Embed(title=title, description=leaderboard_desc)
 
         await interaction.edit_original_response(embed=embed)
