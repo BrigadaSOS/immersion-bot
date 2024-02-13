@@ -87,4 +87,4 @@ class BotManager(commands.Cog):
 
 
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(BotManager(bot), guilds=[discord.Object(id=GUILD_ID)])
+    await bot.add_cog(BotManager(bot))
