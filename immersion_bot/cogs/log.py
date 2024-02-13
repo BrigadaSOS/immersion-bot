@@ -539,10 +539,6 @@ class Log(commands.Cog):
         print(f"2. Updated monthly stats: {all_users_ranking}")
         print("-- END TRANSACTION")
 
-        ranking_message = await self.get_ranking_message(
-            all_users_ranking, user_index, user_ranking_stats, awarded_points
-        )
-        print(ranking_message)
         embed = discord.Embed(
             title=f"Log registrado para {interaction.user.display_name}",
             colour=Colour.from_rgb(46, 204, 113),
@@ -565,7 +561,17 @@ class Log(commands.Cog):
             value=f"{round(user_ranking_stats.points, 2)} puntos",
             inline=False,
         )
-        embed.add_field(name="Ranking", value=ranking_message)
+
+        if user_ranking_stats:
+            ranking_message = (
+                await self.get_ranking_message(
+                    all_users_ranking, user_index, user_ranking_stats, awarded_points
+                )
+                if user_ranking_stats
+                else ""
+            )
+            print(ranking_message)
+            embed.add_field(name="Ranking", value=ranking_message)
 
         embed.set_footer(text=f"LOG ID - {log_id}")
 
