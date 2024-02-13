@@ -529,12 +529,15 @@ class Log(commands.Cog):
         all_users_ranking = store.get_all_users_ranking_stats(
             interaction.guild_id, constants.Period.Monthly, date
         )
+        print(all_users_ranking)
         user_ranking_stats = None
         user_index = 0
         for i, user in enumerate(all_users_ranking):
             if user.uid == str(interaction.user.id):
                 user_ranking_stats = user
                 user_index = i
+
+        points = user_ranking_stats.points if user_ranking_stats else awarded_points
 
         print(f"2. Updated monthly stats: {all_users_ranking}")
         print("-- END TRANSACTION")
@@ -558,7 +561,7 @@ class Log(commands.Cog):
         embed.add_field(name="Puntos", value=awarded_points_msg, inline=False)
         embed.add_field(
             name=f"Total - {date.strftime('%B').title()}",
-            value=f"{round(user_ranking_stats.points, 2)} puntos",
+            value=f"{round(points, 2)} puntos",
             inline=False,
         )
 
