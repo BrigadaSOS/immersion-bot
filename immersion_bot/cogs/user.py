@@ -8,15 +8,17 @@ from enum import Enum
 from typing import Optional
 
 import discord
+
+import constants
 import helpers
-from helpers import Period
 import matplotlib.pyplot as plt
 import pandas as pd
 from discord import app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
 from dotenv import load_dotenv
-from sql import Store, MediaType
+from sql import Store
+from constants import MediaType, Period
 
 #############################################################
 
@@ -62,7 +64,7 @@ class User(commands.Cog):
         print("Logs", logs)
         start_date, end_date = logs[0].created_at, logs[-1].created_at
 
-        if timeframe == helpers.Period.AllTime.value:
+        if timeframe == constants.Period.AllTime.value:
             for year, month in month_year_iter(
                 start_date.month, start_date.year, end_date.month, end_date.year
             ):
@@ -73,7 +75,7 @@ class User(commands.Cog):
             for log in logs:
                 log_dict[log.media_type.value][
                     log.created_at.strftime("%b/%y")
-                ] += helpers._to_amount(log.media_type.value, log.amount)
+                ] += log.points
 
         else:
             # Set empty days to 0
@@ -81,9 +83,7 @@ class User(commands.Cog):
                 for date in daterange(start_date, end_date):
                     log_dict[media_type.value].setdefault(date.date(), 0)
             for log in logs:
-                log_dict[log.media_type.value][
-                    log.created_at.date()
-                ] += helpers._to_amount(log.media_type.value, log.amount)
+                log_dict[log.media_type.value][log.created_at.date()] += log.points
             log_dict = dict(sorted(log_dict.items()))
 
         fig, ax = plt.subplots(figsize=(16, 12))

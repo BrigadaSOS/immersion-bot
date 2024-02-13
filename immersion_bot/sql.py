@@ -1,28 +1,13 @@
 import ast
 import sqlite3
+import uuid
 from collections import namedtuple
-from enum import Enum
-
+from datetime import datetime
+from typing import Optional, List
 import helpers
 
-
-class SqliteEnum(Enum):
-    def __conform__(self, protocol):
-        if protocol is sqlite3.PrepareProtocol:
-            return self.name
-
-
-class MediaType(SqliteEnum):
-    # As it is
-    ANIME = "ANIME"
-    MANGA = "MANGA"
-    VN = "VN"
-    LN = "LN"
-    GAME = "GAME"
-    AUDIOBOOK = "AUDIOBOOK"
-    LISTENING = "LISTENING"
-    READTIME = "READTIME"
-    ANYTHING = "ANYTHING"
+import constants
+from constants import MediaType, UserRankingDto
 
 
 def namedtuple_factory(cursor, row):
@@ -45,94 +30,102 @@ class Store:
 
     def new_log(
         self,
-        discord_guild_id,
-        discord_user_id,
-        media_type,
-        amount,
-        time,
-        note,
+        discord_guild_id: int,
+        discord_user_id: int,
+        media_type: str,
+        amount: int,
+        time: int,
+        title,
+        description,
         created_at,
-    ):
-        with self.conn:
-            self.conn.execute(
-                "INSERT INTO logs (discord_guild_id, discord_user_id, media_type, amount, time, note, created_at)VALUES (?,?,?,?,?,?, ?)",
-                (
-                    int(discord_guild_id),
-                    int(discord_user_id),
-                    str(media_type),
-                    int(amount),
-                    int(time),
-                    str(note),
-                    str(created_at),
-                ),
-            )
+        points,
+    ) -> str:
+        print("Start insert")
 
-    def current_points(self, discord_guild_id, discord_user_id, created_at):
-        with self.conn:
-            query = f"""
-            SELECT SUM(amount) as sum_amount FROM logs
-            WHERE discord_guild_id=? AND discord_user_id=? AND created_at BETWEEN '{created_at[0]}' AND '{created_at[1]}'
-            """
+        cursor = self.conn.cursor()
+        log_id = str(uuid.uuid4())
+        cursor.execute(
+            f"""
+            INSERT INTO logs(discord_guild_id, discord_user_id, media_type, amount, time, created_at, points, title, description, log_id)
+            VALUES (?,?,?,?,?,?,?,?,?,?)""",
+            (
+                int(discord_guild_id),
+                int(discord_user_id),
+                str(media_type),
+                int(amount),
+                int(time),
+                str(created_at),
+                str(points),
+                str(title),
+                description,
+                str(log_id),
+            ),
+        )
+        self.conn.commit()
+        return log_id
 
-            data = (discord_guild_id, discord_user_id)
+    def delete_log(self, discord_guild_id, discord_user_id, log_id):
+        query = f"""
+        DELETE FROM logs
+        WHERE discord_guild_id=? AND discord_user_id=? AND log_id=?
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(
+            query, (str(discord_guild_id), str(discord_user_id), str(log_id).strip())
+        )
+        self.conn.commit()
+        print(cursor.rowcount)
+
+        return cursor.rowcount > 0
+
+    def get_all_logs(self):
+        query = f"""
+        SELECT *, rowid
+        FROM logs
+        """
+
+        cursor = self.conn.cursor()
+        cursor.execute(query)
+        return cursor.fetchall()
+
+    def update_old_row_format(self, row):
+        set_statements = []
+        if not row.log_id:
+            set_statements.append(f"log_id = '{str(uuid.uuid4())}'")
+
+        if not row.points:
+            points = helpers._to_amount(row.media_type.value, row.amount, row.time)
+            set_statements.append(f"points = {points}")
+
+        if not row.title:
+            note = ast.literal_eval(row.note)
+            print(note)
+            title = note[0]
+            set_statements.append(f"title = '{title}'")
+            if len(note) > 1 and note[1]:
+                description = note[1]
+                set_statements.append(f"description = '{description}'")
+
+        if set_statements:
+            query = f"""UPDATE logs
+                    SET {','.join(set_statements)}
+                    WHERE rowid = {row.rowid}"""
+
+            print(query)
             cursor = self.conn.cursor()
-            cursor.execute(query, data)
-            return cursor.fetchall()
-
-    def get_leaderboard(self, discord_user_id, timeframe, media_type):
-        with self.conn:
-            if media_type:
-                where_clause = (
-                    f"WHERE media_type='{media_type.upper()}' AND created_at BETWEEN '{timeframe[1]}' AND '{timeframe[2]}'"
-                    ""
-                )
-            else:
-                where_clause = (
-                    f"WHERE created_at BETWEEN '{timeframe[1]}' AND '{timeframe[2]}'" ""
-                )
-
-            query = f"""
-            WITH scoreboard AS (
-                SELECT
-                    discord_user_id,
-                    SUM(
-                    CASE
-                        {helpers.to_sql_calculation_query()}
-                        ELSE 0
-                    END
-                    ) AS total
-                FROM logs
-                {where_clause}
-                GROUP BY discord_user_id
-                ), leaderboard AS (
-                SELECT
-                    discord_user_id,
-                    total,
-                    RANK () OVER (ORDER BY total DESC) AS rank
-                FROM scoreboard
-                )
-                SELECT * FROM leaderboard
-                WHERE (
-                rank <= 20
-                ) OR (
-                rank >= (SELECT rank FROM leaderboard WHERE discord_user_id = ?) - 1
-                AND
-                rank <= (SELECT rank FROM leaderboard WHERE discord_user_id = ?) + 1
-                );
-            """
-            data = (discord_user_id, discord_user_id)
-            cursor = self.conn.cursor()
-            cursor.execute(query, data)
-            return cursor.fetchall()
+            cursor.execute(query)
+            self.conn.commit()
+        else:
+            print(f"No changes required for {row}")
 
     def get_latest_content_by_user_autocomplete(
         self, discord_user_id, current, media_type
     ):
         query = f"""
-            SELECT note, created_at From logs
+            SELECT title, created_at From logs
             WHERE media_type == '{media_type}' and discord_user_id == '{discord_user_id}'
-            AND note LIKE '%{current}%'
-            GROUP BY note
+            AND title LIKE '%{current}%'
+            GROUP BY title
             ORDER BY created_at DESC
             LIMIT 20
         """
@@ -140,7 +133,7 @@ class Store:
         cursor.execute(query)
         rows = cursor.fetchall()
 
-        content_results = [ast.literal_eval(x[0])[0] for x in rows]
+        content_results = [x.title for x in rows]
         print(content_results)
         return content_results
 
@@ -170,7 +163,8 @@ class Store:
             where_clause += f" AND media_type = '{media_type}'"
 
         query = f"""
-        SELECT * FROM logs
+        SELECT *, row_number() over (order by created_at) as row_num
+        FROM logs
         WHERE {where_clause}
         ORDER BY created_at DESC;
         """
@@ -179,6 +173,89 @@ class Store:
         cursor = self.conn.cursor()
         cursor.execute(query)
         return cursor.fetchall()
+
+    def add_message_id_reference_to_log(self, log_id, discord_message_id):
+        pass
+
+    def get_all_users_ranking_stats(
+        self,
+        guid: str | int,
+        period: constants.Period,
+        date: datetime,
+        media_type: Optional[MediaType] = None,
+    ) -> List[UserRankingDto]:
+        # TODO: Only monthly period for now. Add more periods
+        year = date.year
+        month = str(date.month).zfill(2)
+        print(f"Getting all users for period {year}-{month}. {date}")
+
+        query = f"""
+        SELECT *, RANK() OVER (ORDER BY total_points DESC) as rank_points, RANK() OVER (ORDER BY total_amount DESC) as rank_amount, RANK() OVER (ORDER BY total_time DESC) as rank_time FROM (SELECT discord_guild_id,
+                              discord_user_id,
+                              strftime('%Y', created_at) as year,
+                              strftime('%m', created_at) as month,
+                              SUM(points)                as total_points,
+                              SUM(amount)                as total_amount,
+                              SUM(time)                  as total_time
+                       FROM logs
+                       WHERE year = ?
+                       AND month = ?
+                       {"AND media_type = ?" if media_type else ''}
+                       GROUP BY discord_guild_id, discord_user_id, year, month)
+        """
+        arguments = [str(year), str(month)]
+        if media_type:
+            arguments.append(str(media_type.value))
+
+        cursor = self.conn.cursor()
+        cursor.execute(query, arguments)
+        rows = cursor.fetchall()
+
+        return [
+            UserRankingDto(
+                guid=row.discord_guild_id,
+                uid=row.discord_user_id,
+                points=row.total_points,
+                rank_points=row.rank_points,
+                time=row.total_time,
+                rank_time=row.rank_time,
+                amount=row.total_amount,
+                rank_amount=row.rank_amount,
+            )
+            for row in rows
+        ]
+
+    def get_user_ranking_stats(
+        self,
+        guid: str,
+        uid: str,
+        period: constants.Period,
+        date: datetime,
+        media_type: Optional[MediaType] = None,
+    ) -> Optional[UserRankingDto]:
+        print(f"Getting user {period} points for {uid} - {date}")
+
+        ranking = self.get_all_users_ranking_stats(guid, period, date)
+
+        for user in ranking:
+            if user.uid == uid:
+                return user
+
+        return None
+
+    def _date_and_period_to_ranking_period_key(
+        self, period: constants.Period, date: datetime
+    ) -> str:
+        sql_period = f"{date.year}-{date.month}"
+
+        if period == constants.Period.Yearly:
+            sql_period = f"{date.year}"
+        elif period == constants.Period.Monthly:
+            sql_period = f"{date.year}-{date.month}"
+        elif period == constants.Period.Monthly:
+            sql_period = "ALLTIME"
+
+        return sql_period
 
     def get_logs_by_user(self, discord_user_id, media_type, timeframe):
         print(f"Get logs for {discord_user_id} - {media_type} -{timeframe} ")

@@ -1,6 +1,5 @@
 import itertools
 import math
-from enum import Enum
 from fractions import Fraction
 
 import dateparser
@@ -8,20 +7,9 @@ import random
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from AnilistPython import Anilist
 from discord.app_commands import Choice
-from vndb_thigh_highs import VNDB
-from vndb_thigh_highs.models import VN
 
-from sql import MediaType
-
-
-class Period(Enum):
-    Monthly = "Mes"
-    Yearly = "Año"
-    Weekly = "Semana"
-    AllTime = "Todo"
-
+from constants import MediaType, Period, UserRankingDto
 
 # USE THIS ONE
 MULTIPLIERS = {
@@ -36,9 +24,12 @@ MULTIPLIERS = {
 }
 
 
-def _to_amount(media_type, amount):
+def _to_amount(media_type, amount, time=None):
     if media_type not in MULTIPLIERS:
         raise Exception(f"Unknown media type: {media_type}")
+
+    if time and media_type == MediaType.ANIME.value:
+        amount = time / 20
 
     return float(amount * MULTIPLIERS[media_type])
 
@@ -65,30 +56,31 @@ def get_logeable_media_type_choices():
     ]
 
 
-def multiplied_points(logs):
-    dictes = defaultdict(list)
-    for row in logs:
-        dictes[row.media_type.value].append(row.amount)
-    return dict(
-        [
-            (key, (_to_amount(key, sum(values)), sum(values)))
-            for key, values in dictes.items()
-        ]
-    )
-
-
 def multiplied_points_with_time(logs):
-    dictes = defaultdict(list)
+    amount_dictes = defaultdict(list)
+    point_dictes = defaultdict(list)
     time_dictes = defaultdict(list)
     for row in logs:
-        dictes[row.media_type.value].append(row.amount)
+        amount_dictes[row.media_type.value].append(row.amount)
+        point_dictes[row.media_type.value].append(row.points)
         time_dictes[row.media_type.value].append(row.time)
     return dict(
         [
-            (key, (_to_amount(key, sum(values)), sum(values), sum(time_dictes[key])))
-            for key, values in dictes.items()
+            (key, (sum(point_dictes[key]), sum(values), sum(time_dictes[key])))
+            for key, values in amount_dictes.items()
         ]
     )
+
+
+def minutes_to_formatted_hhmm(minutes: int):
+    hours = minutes // 60
+    remaining_minutes = minutes % 60
+
+    msg = ""
+    if hours > 0:
+        msg += f"{hours} hora{'s' if hours > 1 else ''} y"
+
+    return f"{msg} {remaining_minutes} minuto{'s' if remaining_minutes > 1 else ''}"
 
 
 def media_type_format(media_type, plural=True):
@@ -306,13 +298,22 @@ def get_index_by_ranges(amount, ranges):
         return -1
 
 
-def point_message_converter(media_type, amount, name):
-    amount = _to_amount(media_type, amount)
+# TODO: Remove name from arguments
+def point_message_converter(media_type, amount, name, time=None):
     multiplier = MULTIPLIERS[media_type]
-
+    amount = _to_amount(media_type, amount, time)
     print("MESSAGE CONVERTER")
     print(media_type, amount, name)
     print("print", media_type_format(media_type, False))
+
+    # When logging animes we assume 20min an episode, but if time is more than 20 we get points for more than one episode
+    if time and media_type == MediaType.ANIME.value:
+        return (
+            amount,
+            media_type_format(media_type),
+            f"{multiplier} puntos por cada 20 minutos → **+{round(amount, 2)} puntos**",
+            name,
+        )
 
     if isinstance(multiplier, Fraction):
         return (

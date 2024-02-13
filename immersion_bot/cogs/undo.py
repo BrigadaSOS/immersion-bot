@@ -1,4 +1,3 @@
-import ast
 import os
 from typing import Optional
 
@@ -51,10 +50,9 @@ class Undo(commands.Cog):
         if len(deleted_rows) > 0:
             bodyMessage = "### Se han eliminado los siguientes registros:\n"
             for row in deleted_rows:
-                note = ast.literal_eval(row.note)
-                bodyMessage += f"* **[{row.created_at.strftime('%Y-%m-%d')}]** {row.media_type.value} {note[0]} - {round(row.amount, 2)} {helpers.media_type_format(row.media_type.value, (row.amount > 1))} - {row.time} minutos - {helpers._to_amount(row.media_type.value, row.amount)} puntos\n"
-                if note[1]:
-                    bodyMessage += f"\t* {note[1]}"
+                bodyMessage += f"* **[{row.created_at.strftime('%Y-%m-%d')}]** {row.media_type.value} {row.title} - {round(row.amount, 2)} {helpers.media_type_format(row.media_type.value, (row.amount > 1))} - {row.time} minutos - {helpers._to_amount(row.media_type.value, row.amount, row.time)} puntos\n"
+                if row.description:
+                    bodyMessage += f"\t* {row.description}"
         else:
             bodyMessage = "No se ha encontrado ningún registro a eliminar."
 

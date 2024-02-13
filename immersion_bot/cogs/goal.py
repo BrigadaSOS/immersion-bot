@@ -13,7 +13,8 @@ from discord import app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
 from dotenv import load_dotenv
-from sql import Set_Goal, Store, MediaType
+from sql import Set_Goal, Store
+from constants import MediaType
 from vndb_thigh_highs import VNDB
 from vndb_thigh_highs.models import VN
 
@@ -438,5 +439,7 @@ class Goal(commands.Cog):
     #     await interaction.channel.send(embed=myembed)
 
 
+# TODO: Renable goald commands
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(Goal(bot))
+    pass
+    # await bot.add_cog(Goal(bot))

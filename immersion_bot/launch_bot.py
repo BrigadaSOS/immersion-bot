@@ -72,7 +72,7 @@ class MyBot(commands.Bot):
         await self.change_presence(activity=discord.Game(presence_message))
         print(f"Logged in as\n\tName: {self.user.name}\n\tID: {self.user.id}")
         print(f"Running pycord version: {discord.__version__}")
-        print(f"Guild ID: ${GUILD_ID}. Chanel ID: ${CHANNEL_ID}")
+        print(f"Guild ID: ${GUILD_ID}. Channel ID: ${CHANNEL_ID}")
 
 
 if __name__ == "__main__":

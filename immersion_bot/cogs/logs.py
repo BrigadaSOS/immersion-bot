@@ -1,4 +1,3 @@
-import ast
 import os
 from typing import Optional
 
@@ -21,13 +20,21 @@ GUILD_ID = int(os.environ["GUILD_ID"])
 
 
 class LogsView(discord.ui.View):
-    def __init__(self, user_logs_partitioned, total_num):
+    def __init__(self, user_logs_partitioned, total_num, mostrar_id, interaction):
         super().__init__(timeout=30)
         self.user_logs_partitioned = user_logs_partitioned
         self.total_num = total_num
         self.current_page = 0
+        self.mostrar_id = mostrar_id
         self.pages = len(user_logs_partitioned)
+        self.interaction = interaction
+
         self.update_buttons_status()
+
+    async def on_timeout(self) -> None:
+        print("Timeout")
+        self.clear_items()
+        await self.interaction.edit_original_response(view=self)
 
     @discord.ui.button(style=discord.ButtonStyle.primary, emoji="⏮️")
     async def first_callback(
@@ -35,7 +42,7 @@ class LogsView(discord.ui.View):
     ):
         await interaction.response.defer()
         self.current_page = 0
-        await self.update_buttons_status()
+        self.update_buttons_status()
         bodyMessage = self.generate_text()
 
         await interaction.edit_original_response(content=bodyMessage, view=self)
@@ -46,7 +53,7 @@ class LogsView(discord.ui.View):
     ):
         await interaction.response.defer()
         self.current_page -= 1
-        await self.update_buttons_status()
+        self.update_buttons_status()
         bodyMessage = self.generate_text()
 
         await interaction.edit_original_response(content=bodyMessage, view=self)
@@ -57,7 +64,7 @@ class LogsView(discord.ui.View):
     ):
         await interaction.response.defer()
         self.current_page += 1
-        await self.update_buttons_status()
+        self.update_buttons_status()
         bodyMessage = self.generate_text()
 
         await interaction.edit_original_response(content=bodyMessage, view=self)
@@ -68,12 +75,12 @@ class LogsView(discord.ui.View):
     ):
         await interaction.response.defer()
         self.current_page = self.pages - 1
-        await self.update_buttons_status()
+        self.update_buttons_status()
         bodyMessage = self.generate_text()
 
         await interaction.edit_original_response(content=bodyMessage, view=self)
 
-    async def update_buttons_status(self):
+    def update_buttons_status(self):
         if self.current_page == 0:
             for child in self.children:
                 if type(child) == discord.ui.Button and (
@@ -101,8 +108,10 @@ class LogsView(discord.ui.View):
                     child.disabled = False
 
     def generate_text(self):
-        bodyMessage = f"```Registro del usuario - Página {self.current_page+1}/{self.pages} - {self.total_num} registros:\n"
-        bodyMessage += user_logs_to_text(self.user_logs_partitioned[self.current_page])
+        bodyMessage = f"```Página {self.current_page+1}/{self.pages} - {self.total_num} registros:\n"
+        bodyMessage += user_logs_to_text(
+            self.user_logs_partitioned[self.current_page], self.mostrar_id
+        )
         bodyMessage += "```"
         return bodyMessage
 
@@ -121,11 +130,15 @@ class Logs(commands.Cog):
     )
     @app_commands.describe(usuario=f"Nombre del usuario a buscar")
     @app_commands.choices(media=helpers.get_logeable_media_type_choices())
+    @app_commands.describe(
+        mostrar_id=f"Muestra la ID de cada log (útil para poder buscar logs que eliminar)"
+    )
     async def logs(
         self,
         interaction: discord.Interaction,
         usuario: Optional[discord.User],
         media: Optional[str],
+        mostrar_id: Optional[bool],
     ):
         await interaction.response.defer()
 
@@ -134,31 +147,35 @@ class Logs(commands.Cog):
         store = Store(_DB_NAME)
         user_logs = store.get_all_logs_by_user(discord_user_id, media)
 
-        user_logs_partitioned = list(chunks(user_logs, 25))
+        user_logs_partitioned = list(chunks(user_logs, 10 if mostrar_id else 20))
         print("Get user logs")
-        print(len(user_logs))
 
-        bodyMessage = f"```Registro del usuario - Página 1/{len(user_logs_partitioned)} - {len(user_logs)} registros:\n"
+        bodyMessage = (
+            f"```Página 1/{len(user_logs_partitioned)} - {len(user_logs)} registros:\n"
+        )
 
         if len(user_logs) > 0:
-            bodyMessage += user_logs_to_text(user_logs_partitioned[0])
+            bodyMessage += user_logs_to_text(user_logs_partitioned[0], mostrar_id)
         else:
             bodyMessage += "No se ha encontrado ningún registro para este usuario."
 
         bodyMessage += "```"
 
-        return await interaction.edit_original_response(
-            content=bodyMessage, view=LogsView(user_logs_partitioned, len(user_logs))
+        await interaction.edit_original_response(
+            content=bodyMessage,
+            view=LogsView(
+                user_logs_partitioned, len(user_logs), mostrar_id, interaction
+            ),
         )
 
 
-def user_logs_to_text(user_logs):
+def user_logs_to_text(user_logs, mostrarId):
     userLogsMessage = ""
     for row in user_logs:
-        note = ast.literal_eval(row.note)
-        userLogsMessage += f"[{row.created_at.strftime('%Y-%m-%d')}] {row.media_type.value} - {note[0]} - {int(row.amount)} {helpers.media_type_format(row.media_type.value, (row.amount > 1))} - {row.time} minutos - {round(helpers._to_amount(row.media_type.value, row.amount), 2)} puntos\n"
-        if note[1]:
-            userLogsMessage += f"\t{note[1]}"
+        id = f"#{row.row_num}" if not mostrarId else row.log_id
+        userLogsMessage += f"{id} [{row.created_at.strftime('%Y-%m-%d')}] {row.media_type.value} - {row.title} - {int(row.amount)} {helpers.media_type_format(row.media_type.value, (row.amount > 1))} - {row.time} minutos - {round(row.points, 2)} puntos\n"
+        if row.description:
+            userLogsMessage += f"\t{row.description}"
 
     return userLogsMessage
 

@@ -6,11 +6,15 @@ from typing import List, Optional
 import discord
 from discord.app_commands import Choice
 
+import constants
 import helpers
-from discord import app_commands
+from discord import app_commands, Colour
 from discord.ext import commands
 from dotenv import load_dotenv
-from sql import Set_Goal, Store, MediaType
+
+import sql
+from sql import Set_Goal, Store
+from constants import MediaType
 
 #############################################################
 
@@ -24,6 +28,88 @@ channelid = int(os.environ["CHANNEL_ID"])
 log = logging.getLogger(__name__)
 
 #############################################################
+
+
+class LogEditModal(discord.ui.Modal):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs, timeout=None)
+
+        self.add_item(discord.ui.TextInput(label="Titulo"))
+        self.add_item(
+            discord.ui.Drop(
+                label="Descripción",
+                style=discord.TextStyle.long,
+                max_length=100,
+                required=False,
+            )
+        )
+        self.add_item(
+            discord.ui.TextInput(
+                label="Descripción",
+                style=discord.TextStyle.long,
+                max_length=100,
+                required=False,
+            )
+        )
+        self.add_item(discord.ui.TextInput(label="Cantidad"))
+        self.add_item(discord.ui.TextInput(label="Tiempo"))
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.send_message("Test")
+
+
+class LogButtonsView(discord.ui.View):
+    def __init__(
+        self,
+        log_id,
+        original_user_id: int,
+        embed: discord.Embed,
+        interaction: discord.Interaction,
+    ):
+        super().__init__(timeout=30)
+        self.store = Store(_DB_NAME)
+        self.log_id = log_id
+        self.original_user_id = original_user_id
+        self.embed = embed
+
+        self.interaction = interaction
+
+        # self.update_buttons_status()
+
+    # TODO: Implement edit
+    # @discord.ui.button(style=discord.ButtonStyle.primary, emoji="📝")
+    # async def edit_callback(
+    #         self, interaction: discord.Interaction, button: discord.Button
+    # ):
+    #     await interaction.response.send_modal(LogEditModal(title="Edit Log register"))
+
+    async def on_timeout(self) -> None:
+        print("Timeout")
+        self.clear_items()
+        await self.interaction.edit_original_response(view=self)
+
+    @discord.ui.button(style=discord.ButtonStyle.danger, emoji="🗑️")
+    async def delete_callback(
+        self, interaction: discord.Interaction, button: discord.Button
+    ):
+        if interaction.user.id != self.original_user_id:
+            return await interaction.response.send_message(
+                ephemeral=True, content="Solo el autor del log puede eliminarlo"
+            )
+
+        await interaction.response.defer()
+
+        # TODO: Actually implement remove log
+        self.store.delete_log(interaction.guild_id, self.original_user_id, self.log_id)
+
+        self.embed.title = f"Este registro ha sido eliminado\n~~{self.embed.title}~~"
+        self.embed.colour = Colour.from_rgb(255, 0, 0)
+        self.embed.remove_field(len(self.embed.fields) - 1)
+        self.embed.remove_field(len(self.embed.fields) - 1)
+
+        self.clear_items()
+
+        await interaction.edit_original_response(embed=self.embed, view=self)
 
 
 class Log(commands.Cog):
@@ -57,22 +143,19 @@ class Log(commands.Cog):
     ):
         await interaction.response.defer()
 
+        if interaction.channel.id != channelid:
+            return await interaction.edit_original_response(
+                content="Solo puedes logear en el canal #registro-inmersión."
+            )
+
         if episodios > 20:
             return await interaction.edit_original_response(
                 content="No se pueden registrar más de 20 episodios de una vez."
-            )
-        if episodios < 0:
-            return await interaction.edit_original_response(
-                content="Solo se permiten números positivos."
             )
 
         time_spent_min = 20 * episodios
         if tiempo:
             time_spent_min = helpers.elapsed_time_to_mins(tiempo)
-        if time_spent_min < 0:
-            return await interaction.edit_original_response(
-                content="Solo se permiten números positivos."
-            )
 
         return await self.log(
             interaction,
@@ -105,20 +188,16 @@ class Log(commands.Cog):
     ):
         await interaction.response.defer()
 
+        if interaction.channel.id != channelid:
+            return await interaction.edit_original_response(
+                content="Solo puedes logear en el canal #registro-inmersión."
+            )
+
         if paginas > 3000:
             return await interaction.edit_original_response(
                 content="No se pueden registrar más de 3000 páginas de una vez."
             )
-        if paginas < 0:
-            return await interaction.edit_original_response(
-                content="Solo se permiten números positivos."
-            )
-
         time_spent_min = helpers.elapsed_time_to_mins(tiempo)
-        if time_spent_min < 0:
-            return await interaction.edit_original_response(
-                content="Solo se permiten números positivos."
-            )
 
         return await self.log(
             interaction,
@@ -151,20 +230,17 @@ class Log(commands.Cog):
     ):
         await interaction.response.defer()
 
+        if interaction.channel.id != channelid:
+            return await interaction.edit_original_response(
+                content="Solo puedes logear en el canal #registro-inmersión."
+            )
+
         if caracteres > 200000:
             return await interaction.edit_original_response(
                 content="No se pueden registrar más de 200000 caracteres de una vez."
             )
-        if caracteres < 0:
-            return await interaction.edit_original_response(
-                content="Solo se permiten números positivos."
-            )
 
         time_spent_min = helpers.elapsed_time_to_mins(tiempo)
-        if time_spent_min < 0:
-            return await interaction.edit_original_response(
-                content="Solo se permiten números positivos."
-            )
 
         return await self.log(
             interaction,
@@ -197,20 +273,17 @@ class Log(commands.Cog):
     ):
         await interaction.response.defer()
 
+        if interaction.channel.id != channelid:
+            return await interaction.edit_original_response(
+                content="Solo puedes logear en el canal #registro-inmersión."
+            )
+
         if caracteres > 200000:
             return await interaction.edit_original_response(
                 content="No se pueden registrar más de 200000 caracteres de una vez."
             )
-        if caracteres < 0:
-            return await interaction.edit_original_response(
-                content="Solo se permiten números positivos."
-            )
 
         time_spent_min = helpers.elapsed_time_to_mins(tiempo)
-        if time_spent_min < 0:
-            return await interaction.edit_original_response(
-                content="Solo se permiten números positivos."
-            )
 
         return await self.log(
             interaction,
@@ -245,14 +318,15 @@ class Log(commands.Cog):
     ):
         await interaction.response.defer()
 
+        if interaction.channel.id != channelid:
+            return await interaction.edit_original_response(
+                content="Solo puedes logear en el canal #registro-inmersión."
+            )
+
         time_spent_min = helpers.elapsed_time_to_mins(tiempo)
         if time_spent_min > 480:
             return await interaction.edit_original_response(
                 content="No se pueden registrar más de 480 minutos de una vez."
-            )
-        if time_spent_min < 0:
-            return await interaction.edit_original_response(
-                content="Solo se permiten números positivos."
             )
 
         return await self.log(
@@ -284,14 +358,15 @@ class Log(commands.Cog):
     ):
         await interaction.response.defer()
 
+        if interaction.channel.id != channelid:
+            return await interaction.edit_original_response(
+                content="Solo puedes logear en el canal #registro-inmersión."
+            )
+
         time_spent_min = helpers.elapsed_time_to_mins(tiempo)
         if time_spent_min > 480:
             return await interaction.edit_original_response(
                 content="No se pueden registrar más de 480 minutos de una vez."
-            )
-        if time_spent_min < 0:
-            return await interaction.edit_original_response(
-                content="Solo se permiten números positivos."
             )
 
         return await self.log(
@@ -323,14 +398,15 @@ class Log(commands.Cog):
     ):
         await interaction.response.defer()
 
+        if interaction.channel.id != channelid:
+            return await interaction.edit_original_response(
+                content="Solo puedes logear en el canal #registro-inmersión."
+            )
+
         time_spent_min = helpers.elapsed_time_to_mins(tiempo)
         if time_spent_min > 480:
             return await interaction.edit_original_response(
                 content="No se pueden registrar más de 480 minutos de una vez."
-            )
-        if time_spent_min < 0:
-            return await interaction.edit_original_response(
-                content="Solo se permiten números positivos."
             )
 
         return await self.log(
@@ -362,14 +438,15 @@ class Log(commands.Cog):
     ):
         await interaction.response.defer()
 
+        if interaction.channel.id != channelid:
+            return await interaction.edit_original_response(
+                content="Solo puedes logear en el canal #registro-inmersión."
+            )
+
         time_spent_min = helpers.elapsed_time_to_mins(tiempo)
         if time_spent_min > 480:
             return await interaction.edit_original_response(
                 content="No se pueden registrar más de 480 minutos de una vez."
-            )
-        if time_spent_min < 0:
-            return await interaction.edit_original_response(
-                content="Solo se permiten números positivos."
             )
 
         return await self.log(
@@ -389,22 +466,22 @@ class Log(commands.Cog):
         amount: int,
         time: int,
         name: Optional[str],
-        comment: Optional[str],
+        description: Optional[str],
         backlog: Optional[str],
     ):
-        if interaction.channel.id != channelid:
+        if amount < 0 or time < 0:
             return await interaction.edit_original_response(
-                content="Solo puedes logear en el canal #registro-inmersión."
+                content="Solo se permiten números positivos."
             )
-
-        print(
-            f"[LOGGING FOR {interaction.user.name}]: {media_type} - {amount}u - {time} mins - {name} - {comment} - {backlog}"
-        )
 
         if amount in [float("inf"), float("-inf")]:
             return await interaction.edit_original_response(
                 content="No se permite infinito."
             )
+
+        print(
+            f"[LOGGING FOR {interaction.user.name}]: {media_type} - {amount}u - {time} mins - {name} - {description} - {backlog}"
+        )
 
         if backlog:
             now = datetime.now()
@@ -426,222 +503,133 @@ class Log(commands.Cog):
         if not backlog:
             date = datetime.now()
 
-        def check_achievements(discord_user_id, media_type):
-            logs = store.get_logs_by_user(discord_user_id, media_type, None)
-            weighed_points_mediums = helpers.multiplied_points(logs)
-            abmt = helpers.calc_achievements(weighed_points_mediums)
-            if not bool(abmt):
-                return 0, 0, 0, "", "", "", ""
-            (
-                lower_interval,
-                current_points,
-                upper_interval,
-                rank_emoji,
-                rank_name,
-                next_rank_emoji,
-                next_rank_name,
-            ) = helpers.get_achievemnt_index(abmt)
-
-            return (
-                lower_interval,
-                current_points,
-                upper_interval,
-                rank_emoji,
-                rank_name,
-                next_rank_emoji,
-                next_rank_name,
-            )
-
-        store = Set_Goal(os.environ["GOALS_DB_PATH"])
-        then = date.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(
-            days=1
-        )
-        now = interaction.created_at.replace(hour=0, minute=0, second=0, microsecond=0)
-
-        goals = store.get_goals(
-            interaction.user.id, (now, date)
-        ) + store.get_daily_goals(
-            interaction.user.id
-        )  # getting goals for the current day and daily goals
-        point_goals = store.get_point_goals(
-            interaction.user.id, (now, date)
-        )  # getting point goals
-
         store = Store(os.environ["PROD_DB_PATH"])
-        first_date = date.replace(day=1, hour=0, minute=0, second=0)
-        calc_amount, format, points_msg, title = helpers.point_message_converter(
-            media_type.upper(), amount, name
-        )
-        # returns weighed amount (i.e 1ep = 9.5 so weighed amount of 1 ANIME EP is 9.5), format (i.e chars, pages, etc), msg i.e 1/350 points/characters = x points, title is the anime/vn/manga title through anilist or vndb query
-        old_points = store.get_logs_by_user(
-            interaction.user.id, None, (first_date, date)
-        )  # query to get logs of past month for monlthy point overview i.e ~~June: 2k~~ -> June: 2.1k
-
-        old_weighed_points_mediums = helpers.multiplied_points(old_points)
         (
-            old_rank_achievement,
-            old_achievemnt_points,
-            old_next_achievement,
-            old_emoji,
-            old_rank_name,
-            old_next_rank_emoji,
-            old_next_rank_name,
-        ) = check_achievements(interaction.user.id, media_type.upper())
-        # returns achievemnt progress before log is getting registered to compare with achievement progress after log
+            awarded_points,
+            format,
+            awarded_points_msg,
+            title,
+        ) = helpers.point_message_converter(media_type.upper(), amount, name, time)
 
-        store.new_log(
+        # TODO: Transform to transaction
+        print("-- START TRANSACTION")
+        log_id = store.new_log(
             interaction.guild_id,
             interaction.user.id,
             media_type.upper(),
             amount,
             time,
-            [title, comment],
+            title,
+            description,
             date,
-        )  # log being registered
-
-        (
-            current_rank_achievement,
-            current_achievemnt_points,
-            new_rank_achievement,
-            new_emoji,
-            new_rank_name,
-            new_next_rank_emoji,
-            new_next_rank_name,
-        ) = check_achievements(interaction.user.id, media_type.upper())
-        # getting new achievement progress
-
-        print(f"11111111111 {amount}")
-        current_points = store.get_logs_by_user(
-            interaction.user.id, None, (first_date, date)
-        )  # current total points
-        current_weighed_points_mediums = helpers.multiplied_points(current_points)
-
-        recent_logs = store.get_recent_goal_alike_logs(
-            interaction.user.id, (now, date)
-        )  # getting logs of past day for goals
-
-        async def goals_row(
-            discord_user_id, req_media_type, req_amount, text, created_at, frequency
-        ):
-            for log in recent_logs:
-                if log.media_type.value == req_media_type:
-                    if title == text:
-                        return f"""- {"~~" + str(log.amount) + "/" + str(req_amount) + " " + str(helpers.media_type_format(req_media_type.value)) + " " + text + "~~" if log.amount >= req_amount else str(log.amount) + "/" + req_amount + str(helpers.media_type_format(req_media_type.value)) + text}"""
-                    if title != text:
-                        return
-
-        goals_description = []
-
-        rl_notes_l = [note for media_type, amount, note in recent_logs]
-        rl_media_type_l = [media_type for media_type, amount, note in recent_logs]
-        rl_media_type_amount_l = [
-            (media_type, amount) for media_type, amount, note in recent_logs
-        ]
-        # handling goals, i.e watch 3 eps of anime, read 3000 chars of VN by comparing two lists (goals and recent_logs)
-        if goals:
-            for goals_row in goals:
-                if recent_logs:
-                    if any(goals_row.text in text for text in rl_notes_l):
-                        indices = helpers.indices_text(recent_logs, goals_row.text)
-                        points = []
-                        for i in indices:
-                            points.append(recent_logs[i].da)
-                        goals_description.append(
-                            f"""- {"~~" + str(int(sum(points))) + "/" + str(int(goals_row.amount)) + " " + str(helpers.media_type_format(goals_row.media_type.value)) + " " + goals_row.text + "~~" if sum(points) >= goals_row.amount else str(int(sum(points))) + "/" + str(int(goals_row.amount)) + " " + str(helpers.media_type_format(goals_row.media_type.value)) + " " + goals_row.text} {"(" + goals_row.freq + ")" if goals_row.freq != None else ""}"""
-                        )
-                        continue
-                    else:
-                        goals_description.append(
-                            f"""- 0/{goals_row.amount} {helpers.media_type_format(goals_row.media_type.value)} {goals_row.text} {"(" + goals_row.freq + ")" if goals_row.freq != None else ""}"""
-                        )
-                        break
-                else:
-                    goals_description.append(
-                        f"""- 0/{goals_row.amount} {helpers.media_type_format(goals_row.media_type.value)} {goals_row.text} {"(" + goals_row.freq + ")" if goals_row.freq != None else ""}"""
-                    )
-                    continue
-
-        print(f"222222 {amount}")
-
-        # handling point_goals
-        if point_goals:
-            for points_row in point_goals:
-                if recent_logs:
-                    if points_row.media_type in rl_media_type_l:
-                        indices = helpers.indices_media(
-                            recent_logs, points_row.media_type
-                        )
-                        points = []
-                        for i in indices:
-                            points.append(
-                                helpers._to_amount(
-                                    recent_logs[i].media_type.value, recent_logs[i].da
-                                )
-                            )
-                        goals_description.append(
-                            f"""- {sum(points)}/{points_row.amount} puntos {points_row.text} {"(" + points_row.freq + ")" if points_row.freq != None else ""}"""
-                        )
-                        continue
-                    else:
-                        if points_row.media_type.value == "ANYTHING":
-                            points = []
-                            for media, amount2 in rl_media_type_amount_l:
-                                points.append(helpers._to_amount(media.value, amount2))
-                            goals_description.append(
-                                f"""- {"~~" + str(round(sum(points), 0)) + "/" + str(points_row.amount2) + " puntos " + points_row.text + (" (" + points_row.freq + ") " if points_row.freq != None else "") + "~~" if sum(points) >= points_row.amount else str(round(sum(points), 0)) + "/" + str(points_row.amount) + " puntos " + points_row.text + (" (" + points_row.freq + ") " if points_row.freq != None else "")}"""
-                            )
-                            continue
-                        else:
-                            goals_description.append(
-                                f"""- 0/{points_row.amount} puntos {points_row.text} {"(" + points_row.freq + ")" if points_row.freq != None else ""}"""
-                            )
-                            break
-                else:
-                    goals_description.append(
-                        f"""- 0/{points_row.amount} puntos {points_row.text} {"(" + points_row.freq + ")" if points_row.freq != None else ""}"""
-                    )
-                    continue
-        goals_description = "\n".join(goals_description)
-        print("GOals descriptions")
-        print(goals_description)
-
-        bodyMessage = ""
-
-        if backlog:
-            bodyMessage += f"### -- [Backlog] registrando para {backlog} --\n"
-
-        # <Username> ha logeado <amount> <media_type_format> de <name> en <time> minutos
-        bodyMessage += (
-            f"### {interaction.user.mention} ha logeado {amount} {format} de {title}"
+            awarded_points,
         )
-        if media_type not in [
-            MediaType.LISTENING.value,
-            MediaType.READTIME.value,
-            MediaType.AUDIOBOOK.value,
-            MediaType.GAME.value,
-        ]:
-            bodyMessage += f" en {time} minutos"
+        print(f"1. New log id - {log_id}")
 
-        # <points> puntos por <media_type_format> -> +<updated_points_amount>
-        bodyMessage += f"\n* {points_msg}\n"
+        all_users_ranking = store.get_all_users_ranking_stats(
+            interaction.guild_id, constants.Period.Monthly, date
+        )
+        user_ranking_stats = None
+        user_index = 0
+        for i, user in enumerate(all_users_ranking):
+            if user.uid == str(interaction.user.id):
+                user_ranking_stats = user
+                user_index = i
 
-        if goals_description:
-            bodyMessage += f"**Objetivos:**\n{str(goals_description)}\n"
+        print(f"2. Updated monthly stats: {all_users_ranking}")
+        print("-- END TRANSACTION")
 
-        # Month: <old_point_amount> -> <new_point_amount>
-        bodyMessage += f'* **{date.strftime("%B").title()}: ** ~~{ helpers.millify(sum(i for i, j in list(old_weighed_points_mediums.values())))} ~~ → ** {helpers.millify(sum(i for i, j in list(current_weighed_points_mediums.values())))} **\n'
+        ranking_message = await self.get_ranking_message(
+            all_users_ranking, user_index, user_ranking_stats, awarded_points
+        )
+        print(ranking_message)
+        embed = discord.Embed(
+            title=f"Log registrado para {interaction.user.display_name}",
+            colour=Colour.from_rgb(46, 204, 113),
+        )
+        embed.add_field(
+            name="Fecha", value=f"**{date.strftime('[%y-%m-%d - %H:%M]')}**"
+        )
+        embed.add_field(name="Medio", value=media_type.title())
+        embed.add_field(name="Título", value=title, inline=False)
+        embed.add_field(
+            name="Cantidad",
+            value=f"{amount} {helpers.media_type_format(media_type, amount > 1)}",
+        )
+        embed.add_field(name="Tiempo", value=helpers.minutes_to_formatted_hhmm(time))
+        if description:
+            embed.add_field(name="Comentario", value=description, inline=False)
+        embed.add_field(name="Puntos", value=awarded_points_msg, inline=False)
+        embed.add_field(
+            name=f"Total - {date.strftime('%B').title()}",
+            value=f"{round(user_ranking_stats.points, 2)} puntos",
+            inline=False,
+        )
+        embed.add_field(name="Ranking", value=ranking_message)
 
-        if old_next_achievement == new_rank_achievement:
-            bodyMessage += f"\n**Siguiente logro:** {new_next_rank_name} {new_next_rank_emoji} en {str(new_rank_achievement-current_achievemnt_points)} {helpers.media_type_format(media_type.upper())}\n"
-        else:
-            bodyMessage += f"\n**¡Logro desbloqueado!** {new_rank_name} {new_emoji} - {str(int(current_rank_achievement))} {helpers.media_type_format(media_type.upper())}\n"
-            bodyMessage += f"**Siguiente logro:** {new_next_rank_name} {new_next_rank_emoji} - {str(int(new_rank_achievement))} {helpers.media_type_format(media_type.upper())}\n"
+        embed.set_footer(text=f"LOG ID - {log_id}")
 
-        if comment:
-            bodyMessage += f">>> {comment}"
+        await interaction.edit_original_response(
+            embed=embed,
+            view=LogButtonsView(log_id, interaction.user.id, embed, interaction),
+        )
 
-        # final log message
-        await interaction.edit_original_response(content=bodyMessage)
+    async def get_ranking_message(
+        self,
+        all_users_ranking: List[constants.UserRankingDto],
+        user_index: int,
+        user_ranking_stats: constants.UserRankingDto,
+        awarded_points: int,
+    ):
+        previous_user_index = max(user_index - 1, 0)
+        next_user_index = min(user_index + 1, len(all_users_ranking) - 1)
+
+        mini_ranking_users = all_users_ranking[
+            previous_user_index : next_user_index + 1
+        ]
+
+        bodyMessageLines = []
+
+        advanced_in_ranking = (
+            next_user_index != user_index
+            and all_users_ranking[next_user_index].points
+            > user_ranking_stats.points - awarded_points
+        )
+        if advanced_in_ranking:
+            bodyMessageLines.append(
+                f"🏆 Has subido al puesto número **{user_ranking_stats.rank_points}**\n"
+            )
+
+        for user in mini_ranking_users:
+            i = user.rank_points
+            bodymessageLine = ""
+            display_name = user.uid
+            try:
+                discord_user = await self.bot.fetch_user(int(user.uid))
+                display_name = discord_user.display_name
+            except Exception as err:
+                print(err)
+
+            if user.uid == user_ranking_stats.uid:
+                bodymessageLine += "** "
+
+            emoji_decoration = (
+                ":first_place: "
+                if i == 1
+                else ":second_place: "
+                if i == 2
+                else ":third_place: "
+                if i == 3
+                else ""
+            )
+            bodymessageLine += f"{emoji_decoration}{i}. {display_name} - {user.points}"
+
+            if user.uid == user_ranking_stats.uid:
+                bodymessageLine += "**"
+
+            bodyMessageLines.append(bodymessageLine)
+
+        return "\n".join(bodyMessageLines)
 
     @log_anime.autocomplete("nombre")
     async def log_anime_autocomplete(
