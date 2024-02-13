@@ -127,12 +127,12 @@ class Ranking(commands.Cog):
                 if i == 1
                 else ":third_place: "
                 if i == 2
-                else ""
+                else ":military_medal: "
             )
             row_message += f"{emoji_decoration}{i+1}. {display_name} - "
             match rankingCriteria:
                 case RankingCriteria.Points:
-                    row_message += f"{user.points} puntos"
+                    row_message += f"{round(user.points, 2)} puntos"
 
                 case RankingCriteria.Time:
                     row_message += helpers.minutes_to_formatted_hhmm(user.time)
