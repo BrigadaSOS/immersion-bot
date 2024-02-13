@@ -629,7 +629,7 @@ class Log(commands.Cog):
                 if i == 3
                 else ":military_medal: "
             )
-            bodymessageLine += f"{emoji_decoration}{i}. {display_name} - {user.points}"
+            bodymessageLine += f"{emoji_decoration}{i}. {display_name} - {round(user.points, 2)}"
 
             if user.uid == user_ranking_stats.uid:
                 bodymessageLine += "**"
