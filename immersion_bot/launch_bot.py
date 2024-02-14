@@ -69,8 +69,8 @@ class MyBot(commands.Bot):
         await bot_owner.create_dm()
         self.bot_owner_dm_channel = bot_owner.dm_channel
 
-        # self.tree.copy_global_to(guild=discord.Object(id=GUILD_ID))
-        # await self.tree.sync(guild=discord.Object(id=GUILD_ID))
+        self.tree.copy_global_to(guild=discord.Object(id=GUILD_ID))
+        await self.tree.sync(guild=discord.Object(id=GUILD_ID))
 
         await self.change_presence(activity=discord.Game(presence_message))
         print(f"Logged in as\n\tName: {self.user.name}\n\tID: {self.user.id}")
@@ -79,5 +79,8 @@ class MyBot(commands.Bot):
 
 
 if __name__ == "__main__":
+    # Set timezone as Colombia
+    os.environ["TZ"] = "America/Bogota"
+
     bot = MyBot()
     bot.run(os.environ["TOKEN"])

@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 import discord
+import pytz
 from discord.app_commands import Choice
 
 import constants
@@ -469,6 +470,8 @@ class Log(commands.Cog):
         description: Optional[str],
         backlog: Optional[str],
     ):
+        store = Store(_DB_NAME)
+
         if amount < 0 or time < 0:
             return await interaction.edit_original_response(
                 content="Solo se permiten números positivos."
@@ -479,12 +482,15 @@ class Log(commands.Cog):
                 content="No se permite infinito."
             )
 
-        print(
-            f"[LOGGING FOR {interaction.user.name}]: {media_type} - {amount}u - {time} mins - {name} - {description} - {backlog}"
+        now = datetime.now()
+
+        user_settings = store.get_user_settings(
+            interaction.guild_id, interaction.user.id
         )
+        if user_settings and user_settings.timezone:
+            now = datetime.now(tz=pytz.timezone(user_settings.timezone))
 
         if backlog:
-            now = datetime.now()
             created_at = datetime.now().replace(
                 year=int(backlog.split("-")[0]),
                 month=int(backlog.split("-")[1]),
@@ -499,11 +505,12 @@ class Log(commands.Cog):
                     content="""No puedes registrar logs en el futuro."""
                 )
             if now > created_at:
-                date = created_at
-        if not backlog:
-            date = datetime.now()
+                now = created_at
 
-        store = Store(os.environ["PROD_DB_PATH"])
+        print(
+            f"{now} [LOGGING FOR {interaction.user.name}]: {media_type} - {amount}u - {time} mins - {name} - {description} - {backlog}"
+        )
+
         (
             awarded_points,
             format,
@@ -521,13 +528,13 @@ class Log(commands.Cog):
             time,
             title,
             description,
-            date,
+            now,
             awarded_points,
         )
         print(f"1. New log id - {log_id}")
 
         all_users_ranking = store.get_all_users_ranking_stats(
-            interaction.guild_id, constants.Period.Monthly, date
+            interaction.guild_id, constants.Period.Monthly, now
         )
         print(all_users_ranking)
         user_ranking_stats = None
@@ -544,9 +551,7 @@ class Log(commands.Cog):
             title=f"Log registrado para {interaction.user.display_name}",
             colour=Colour.from_rgb(46, 204, 113),
         )
-        embed.add_field(
-            name="Fecha", value=f"**{date.strftime('[%y-%m-%d - %H:%M]')}**"
-        )
+        embed.add_field(name="Fecha", value=f"**{now.strftime('[%y-%m-%d - %H:%M]')}**")
         embed.add_field(name="Medio", value=media_type.title())
         embed.add_field(name="Título", value=title, inline=False)
         embed.add_field(
@@ -568,7 +573,7 @@ class Log(commands.Cog):
             )
             print(ranking_message)
             embed.add_field(
-                name=f"Total - {date.strftime('%B').title()}",
+                name=f"Total - {now.strftime('%B').title()}",
                 value=f"{round(user_ranking_stats.points, 2)} puntos",
                 inline=False,
             )
@@ -629,7 +634,9 @@ class Log(commands.Cog):
                 if i == 3
                 else ":military_medal: "
             )
-            bodymessageLine += f"{emoji_decoration}{i}. {display_name} - {round(user.points, 2)}"
+            bodymessageLine += (
+                f"{emoji_decoration}{i}. {display_name} - {round(user.points, 2)}"
+            )
 
             if user.uid == user_ranking_stats.uid:
                 bodymessageLine += "**"

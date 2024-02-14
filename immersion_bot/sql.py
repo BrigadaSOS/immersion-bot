@@ -177,6 +177,28 @@ class Store:
     def add_message_id_reference_to_log(self, log_id, discord_message_id):
         pass
 
+    def save_timezone_to_user_info(self, guid, uid, timezone_code):
+        query = f"""
+        INSERT INTO users (discord_guild_id, discord_user_id, timezone) VALUES (?, ?, ?) ON CONFLICT DO UPDATE SET timezone=?
+        """
+
+        cursor = self.conn.cursor()
+        cursor.execute(query, (guid, uid, timezone_code, timezone_code))
+        self.conn.commit()
+
+        return cursor.rowcount > 0
+
+    def get_user_settings(self, guid, uid):
+        query = f"""
+        SELECT * FROM users
+        WHERE discord_guild_id = ? AND discord_user_id = ?
+        """
+
+        cursor = self.conn.cursor()
+        cursor.execute(query, (guid, uid))
+
+        return cursor.fetchone()
+
     def get_all_users_ranking_stats(
         self,
         guid: str | int,
